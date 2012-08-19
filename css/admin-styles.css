@@ -1,0 +1,20 @@
+#icon-edit.icon32-posts-robust-slide, 
+#icon-post.icon32-posts-robust-slide, 
+#adminmenu #menu-posts-robust-slide .wp-menu-image {
+	background: url( '../images/admin-icons.png?v=0.1.2' ) no-repeat;
+}
+
+#icon-edit.icon32-posts-robust-slide, 
+#icon-post.icon32-posts-robust-slide {
+	background-position: left top;
+}
+
+#adminmenu #menu-posts-robust-slide .wp-menu-image {
+	background-position: left -64px;
+}
+
+#adminmenu #menu-posts-robust-slide:hover .wp-menu-image, 
+#adminmenu #menu-posts-robust-slide.wp-has-current-submenu .wp-menu-image, 
+#adminmenu #menu-posts-robust-slide.current .wp-menu-image {
+	background-position: left -32px;
+}
