@@ -6,10 +6,20 @@
 if ( ! class_exists( 'robust_slideshow' ) ) {
 	class robust_slideshow {
 		var $slideshow_defaults = array(
-			'size'   => null, 
-			'width'  => 0, 
-			'height' => 0, 
-			'crop'   => false, 
+			'size'         => null, 
+			'width'        => 0, 
+			'height'       => 0, 
+			'crop'         => false, 
+			'show_title'   => false, 
+			'show_caption' => false, 
+			'animation'    => 'fade', 
+			'slideshowSpeed' => 7000, 
+			'animationSpeed' => 500, 
+			'randomize'    => false, 
+			'pauseOnHover' => false, 
+			'controlNav'   => false, 
+			'directionNav' => false, 
+			'pausePlay'    => false, 
 		);
 		
 		/**
@@ -22,13 +32,14 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 			add_action( 'init', array( $this, 'register_tax' ) );
 			if ( is_admin() ) {
 				wp_register_script( 'jquery-bbq', plugins_url( '/js/jquery-bbq/jquery.ba-bbq.min.js', dirname( __FILE__ ) ), array( 'jquery' ), '1.3-pre', true );
-				wp_register_script( 'robust-slideshow-metabox-script', plugins_url( '/js/metabox-scripts.js', dirname( __FILE__ ) ), array( 'jquery-bbq' ), '0.1.28', true );
-				wp_register_style( 'robust-slideshow-admin-styles', plugins_url( '/css/admin-styles.css', dirname( __FILE__ ) ), '0.1.5', array(), 'all' );
+				wp_register_script( 'robust-slideshow-metabox-script', plugins_url( '/js/metabox-scripts.js', dirname( __FILE__ ) ), array( 'jquery-bbq' ), '0.1.32', true );
+				wp_register_script( 'edit-robust-slideshow', plugins_url( '/js/slideshow-edit.js', dirname( __FILE__ ) ), array( 'jquery' ), '0.1.3', true );
+				wp_register_style( 'robust-slideshow-admin-styles', plugins_url( '/css/admin-styles.css', dirname( __FILE__ ) ), '0.1.6', array(), 'all' );
 				add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_style' ) );
 			} else {
 				wp_register_style( 'flex-slider', plugins_url( '/js/flex-slider/flexslider.css', dirname( __FILE__ ) ), array(), '2.1', 'all' );
 				wp_register_script( 'flex-slider', plugins_url( '/js/flex-slider/jquery.flexslider-min.js', dirname( __FILE__ ) ), array( 'jquery' ), '2.1', true );
-				wp_register_script( 'robust-slideshow', plugins_url( '/js/init-slideshow.js', dirname( __FILE__ ) ), array( 'flex-slider' ), '0.1', true );
+				wp_register_script( 'robust-slideshow', plugins_url( '/js/init-slideshow.js', dirname( __FILE__ ) ), array( 'flex-slider' ), '0.1.8', true );
 			}
 			
 			add_shortcode( 'slideshow', array( $this, 'do_shortcode' ) );
@@ -46,6 +57,9 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 		
 		/**
 		 * Enqueue the stylesheet for the admin area
+		 * This style sheet contains the styles for the slideshow icons
+		 * 		used in the admin area, so it should be enqueued on all
+		 * 		admin pages
 		 */
 		function enqueue_admin_style() {
 			wp_enqueue_style( 'robust-slideshow-admin-styles' );
@@ -87,7 +101,7 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 				'has_archive'   => false, 
 				'hierarchical'  => false,
 				'menu_position' => null,
-				'supports'      => array( 'title', 'editor', 'author', 'thumbnail' )
+				'supports'      => array( 'title', 'editor', 'author', 'thumbnail', 'page-attributes' )
 			) );
 			
 			register_post_type( 'robust-slide', $args );
@@ -124,26 +138,30 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
         <option value="text"<?php selected( $meta_vals['type'], 'text' ) ?>><?php _e( 'Just display the content of this post' ) ?></option>
         <option value="other-image"<?php selected( $meta_vals['type'], 'other-image' ) ?>><?php _e( 'Use an image from the media library' ) ?></option>
     </select></p>
-<h4><?php _e( 'Video Information' ) ?></h4>
-<p><?php _e( 'If the video option is selected above, please specify the URL to the video that should be embedded' ) ?><br />
-	<label for="slide-video-url"><?php _e( 'Video URL' ) ?></label>
-    	<input type="url" class="widefat" name="robust[video-url]" id="slide-video-url" value="<?php echo esc_url( $meta_vals['video-url'] ) ?>" /></p>
-<h4><?php _e( 'Image Choice' ) ?></h4>
-<p><?php _e( 'If you chose to use an image from the media library (other than the featured image for this post), please choose the appropriate media item.' ) ?><br />
-	<label for="slide-image-id"><?php _e( 'Image' ) ?></label>
-    	<select class="widefat" name="robust[image-id]" id="slide-image-id">
-        	<option value=""<?php selected( $meta_vals['image-id'], null ) ?>><?php _e( 'Use the featured image' ) ?></option>
+<div class="video-information">
+    <h4><?php _e( 'Video Information' ) ?></h4>
+    <p><?php _e( 'If the video option is selected above, please specify the URL to the video that should be embedded' ) ?><br />
+        <label for="slide-video-url"><?php _e( 'Video URL' ) ?></label>
+            <input type="url" class="widefat" name="robust[video-url]" id="slide-video-url" value="<?php echo esc_url( $meta_vals['video-url'] ) ?>" /></p>
+</div>
+<div class="image-information">
+    <h4><?php _e( 'Image Choice' ) ?></h4>
+    <p><?php _e( 'If you chose to use an image from the media library (other than the featured image for this post), please choose the appropriate media item.' ) ?><br />
+        <label for="slide-image-id"><?php _e( 'Image' ) ?></label>
+            <select class="widefat" name="robust[image-id]" id="slide-image-id">
+                <option value=""<?php selected( $meta_vals['image-id'], null ) ?>><?php _e( 'Use the featured image' ) ?></option>
 <?php
 			$images = get_posts( array( 'post_type' => 'attachment', 'numberposts' => -1, 'post_status' => null, 'post_parent' => null, 'post_mime_type' => array( 'image/png', 'image/jpeg', 'image/gif' ) ) );
 			if ( ! empty( $images ) ) {
 				foreach ( $images as $img ) {
 ?>
-			<option value="<?php echo $img->ID ?>" title="<?php echo esc_attr( $img->post_title ) ?>"<?php selected( $meta_vals['image-id'], $img->ID ) ?>><?php echo $img->post_title ?></option>
+                <option value="<?php echo $img->ID ?>" title="<?php echo esc_attr( $img->post_title ) ?>"<?php selected( $meta_vals['image-id'], $img->ID ) ?>><?php echo $img->post_title ?></option>
 <?php
 				}
 			}
 ?>
-        </select></p>
+            </select></p>
+</div>
 <?php
 		}
 		
@@ -269,7 +287,7 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 				'update_item' => __( 'Update Slideshow' ),
 				'add_new_item' => __( 'Add New Slideshow' ),
 				'new_item_name' => __( 'New Slideshow Name' ),
-				'menu_name' => __( 'Slideshow' ),
+				'menu_name' => __( 'Edit Slideshows' ),
 			) );
 			$args = apply_filters( 'robust-slideshow-taxonomy-args', array(
 				'hierarchical' => true, 
@@ -285,7 +303,6 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 				), 
 			) );
 			
-			/*add_action( 'admin_menu', array( $this, 'slideshow_admin_menu' ) );*/
 			add_action( 'robust-slideshow_edit_form_fields', array( $this, 'slideshow_edit_fields' ) );
 			add_action( 'robust-slideshow_add_form_fields', array( $this, 'slideshow_add_fields' ) );
 			add_action( 'get_robust-slideshow', array( $this, 'get_slideshow_meta' ) );
@@ -296,30 +313,10 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 		}
 		
 		/**
-		 * Add a link to the Slides admin menu to manage slideshow terms
-		 */
-		function slideshow_admin_menu() {
-			add_submenu_page( 'edit.php?post_type=robust-slide', __( 'Robust Slideshows' ), __( 'Slideshows' ), 'edit_pages', 'edit_robust_slideshows', array( $this, 'slideshow_edit' ) );
-		}
-		
-		/**
-		 * Output the page used to edit slideshows
-		 */
-		function slideshow_edit() {
-?>
-<div class="wrap">
-<?php screen_icon(); ?>
-<h2><?php echo $tax->labels->edit_item; ?></h2>
-<div id="ajax-response"></div>
-<p>This is where you will edit slideshows in the future</p>
-</div>
-<?php
-		}
-		
-		/**
 		 * Output the extra fields for editing a slideshow term
 		 */
 		function slideshow_edit_fields( $term ) {
+			wp_enqueue_script( 'edit-robust-slideshow' );
 			$sizes = get_intermediate_image_sizes();
 ?>
 		<tr>
@@ -366,12 +363,108 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
             	<input name="height" id="height" type="number" min="0" max="2500" value="<?php echo $term->height ?>" />
             </td>
 		</tr>
-		<tr class="form-field">
+		<tr class="form-field hide-after">
 			<th scope="row" valign="top">
             	<label for="crop"><?php _e( 'Crop images to these exact dimensions?' ) ?></label>
             </th>
 			<td>
             	<input type="checkbox" name="crop" id="crop" value="1"<?php checked( $term->crop ) ?> />
+            </td>
+		</tr>
+		<tr>
+        	<th scope="col" colspan="2">
+            	<h3><?php _e( 'Slideshow Appearance' ) ?></h3>
+            </th>
+        </tr>
+		<tr class="form-field">
+			<th scope="row" valign="top">
+            	<label for="show_title"><?php _e( 'Display slide title in slideshow?' ) ?></label>
+            </th>
+			<td>
+            	<input type="checkbox" name="show_title" id="show_title" value="1"<?php checked( $term->show_title ) ?> />
+            </td>
+		</tr>
+		<tr class="form-field">
+			<th scope="row" valign="top">
+            	<label for="show_caption"><?php _e( 'Display slide content as caption?' ) ?></label>
+            </th>
+			<td>
+            	<input type="checkbox" name="show_caption" id="show_caption" value="1"<?php checked( $term->show_caption ) ?> />
+            </td>
+		</tr>
+		<tr>
+        	<th scope="col" colspan="2">
+            	<h3><?php _e( 'Slideshow Behavior' ) ?></h3>
+            </th>
+        </tr>
+		<tr class="form-field">
+			<th scope="row" valign="top">
+            	<label for="animation"><?php _e( 'Slide transition:' ) ?></label>
+            </th>
+			<td>
+            	<select name="animation" id="animation">
+                	<option value="fade"<?php selected( $term->animation, 'fade' ) ?>><?php _e( 'Fade' ) ?></option>
+                    <option value="slide-horizontal"<?php selected( $term->animation, 'slide-horizontal' ) ?>><?php _e( 'Slide horizontally' ) ?></option>
+                    <option value="slide-vertical"<?php selected( $term->animation, 'slide-vertical' ) ?>><?php _e( 'Slide vertically' ) ?></option>
+                </select>
+            </td>
+		</tr>
+        <tr class="form-field">
+        	<th scope="row" valign="top">
+            	<label for="slideshowSpeed"><?php _e( 'How long should each slide appear before transitioning to the next?' ) ?></label>
+            </th>
+            <td>
+            	<input type="number" name="slideshowSpeed" id="slideshowSpeed" value="<?php echo intval( $term->slideshowSpeed ) ?>" />
+                <p><em>Please specify a number in milliseconds (1000 milliseconds = 1 second)</em></p>
+            </td>
+        </tr>
+        <tr class="form-field">
+        	<th scope="row" valign="top">
+            	<label for="animationSpeed"><?php _e( 'How long should the animation between slides last?' ) ?></label>
+            </th>
+            <td>
+            	<input type="number" name="animationSpeed" id="animationSpeed" value="<?php echo intval( $term->animationSpeed ) ?>" />
+                <p><em>Please specify a number in milliseconds (1000 milliseconds = 1 second)</em></p>
+            </td>
+        </tr>
+		<tr class="form-field">
+			<th scope="row" valign="top">
+            	<label for="randomize"><?php _e( 'Randomize the order of the slides?' ) ?></label>
+            </th>
+			<td>
+            	<input type="checkbox" name="randomize" id="randomize" value="1"<?php checked( $term->randomize ) ?> />
+            </td>
+		</tr>
+		<tr class="form-field">
+			<th scope="row" valign="top">
+            	<label for="pauseOnHover"><?php _e( 'Pause the slideshow when someone hovers over a slide?' ) ?></label>
+            </th>
+			<td>
+            	<input type="checkbox" name="pauseOnHover" id="pauseOnHover" value="1"<?php checked( $term->pauseOnHover ) ?> />
+            </td>
+		</tr>
+		<tr class="form-field">
+			<th scope="row" valign="top">
+            	<label for="controlNav"><?php _e( 'Show indicators of how many slides are in the slideshow?' ) ?></label>
+            </th>
+			<td>
+            	<input type="checkbox" name="controlNav" id="controlNav" value="1"<?php checked( $term->controlNav ) ?> />
+            </td>
+		</tr>
+		<tr class="form-field">
+			<th scope="row" valign="top">
+            	<label for="directionNav"><?php _e( 'Show left/right arrows to advance/reverse slides?' ) ?></label>
+            </th>
+			<td>
+            	<input type="checkbox" name="directionNav" id="directionNav" value="1"<?php checked( $term->directionNav ) ?> />
+            </td>
+		</tr>
+		<tr class="form-field">
+			<th scope="row" valign="top">
+            	<label for="pausePlay"><?php _e( 'Show pause/play buttons?' ) ?></label>
+            </th>
+			<td>
+            	<input type="checkbox" name="pausePlay" id="pausePlay" value="1"<?php checked( $term->pausePlay ) ?> />
             </td>
 		</tr>
 <?php
@@ -381,6 +474,7 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 		 * Output the extra fields for adding a new slideshow term
 		 */
 		function slideshow_add_fields( $term ) {
+			wp_enqueue_script( 'edit-robust-slideshow' );
 			$sizes = get_intermediate_image_sizes();
 ?>
 <h3><?php _e( 'Slideshow Dimensions' ) ?></h3>
@@ -408,9 +502,57 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 	<label for="tag-height"><?php _e( 'Slideshow Height' ); ?></label>
 	<input name="height" id="tag-height" type="number" min="0" max="2500" value="" />
 </div>
-<div class="form-field">
-	<input type="checkbox" name="crop" id="tag-crop" value="1" />
+<div class="form-field hide-after">
     <label for="tag-crop"><?php _e( 'Crop images to these exact dimensions?' ) ?></label>
+		<input type="checkbox" name="crop" id="tag-crop" value="1" />
+</div>
+<h3><?php _e( 'Slideshow Appearance' ) ?></h3>
+<div class="form-field">
+	<label for="show_title"><?php _e( 'Display slide title in slideshow?' ) ?></label> 
+        <input type="checkbox" name="show_title" id="show_title" value="1"<?php checked( $this->slideshow_defaults['show_title'] ) ?> />
+</div>
+<div class="form-field">
+	<label for="show_caption"><?php _e( 'Display slide content as caption?' ) ?></label>
+        <input type="checkbox" name="show_caption" id="show_caption" value="1"<?php checked( $this->slideshow_defaults['show_caption'] ) ?> />
+</div>
+<h3><?php _e( 'Slideshow Behavior' ) ?></h3>
+<div class="form-field">
+	<label for="animation"><?php _e( 'Slide transition:' ) ?></label>
+        <select name="animation" id="animation">
+            <option value="fade"<?php selected( $this->slideshow_defaults['animation'], 'fade' ) ?>><?php _e( 'Fade' ) ?></option>
+            <option value="slide-horizontal"<?php selected( $this->slideshow_defaults['animation'], 'slide-horizontal' ) ?>><?php _e( 'Slide horizontally' ) ?></option>
+            <option value="slide-vertical"<?php selected( $this->slideshow_defaults['animation'], 'slide-vertical' ) ?>><?php _e( 'Slide vertically' ) ?></option>
+        </select>
+</div>
+<div class="form-field">
+	<label for="slideshowSpeed"><?php _e( 'How long should each slide appear before transitioning to the next?' ) ?></label>
+        <input type="number" name="slideshowSpeed" id="slideshowSpeed" value="<?php echo intval( $this->slideshow_defaults['slideshowSpeed'] ) ?>" />
+        <p><em>Please specify a number in milliseconds (1000 milliseconds = 1 second)</em></p>
+</div>
+<div class="form-field">
+	<label for="animationSpeed"><?php _e( 'How long should the animation between slides last?' ) ?></label>
+        <input type="number" name="animationSpeed" id="animationSpeed" value="<?php echo intval( $this->slideshow_defaults['animationSpeed'] ) ?>" />
+        <p><em>Please specify a number in milliseconds (1000 milliseconds = 1 second)</em></p>
+</div>
+<div class="form-field">
+	<label for="randomize"><?php _e( 'Randomize the order of the slides?' ) ?></label>
+        <input type="checkbox" name="randomize" id="randomize" value="1"<?php checked( $this->slideshow_defaults['randomize'] ) ?> />
+</div>
+<div class="form-field">
+	<label for="pauseOnHover"><?php _e( 'Pause the slideshow when someone hovers over a slide?' ) ?></label>
+        <input type="checkbox" name="pauseOnHover" id="pauseOnHover" value="1"<?php checked( $this->slideshow_defaults['pauseOnHover'] ) ?> />
+</div>
+<div class="form-field">
+	<label for="controlNav"><?php _e( 'Show indicators of how many slides are in the slideshow?' ) ?></label>
+        <input type="checkbox" name="controlNav" id="controlNav" value="1"<?php checked( $this->slideshow_defaults['controlNav'] ) ?> />
+</div>
+<div class="form-field">
+	<label for="directionNav"><?php _e( 'Show left/right arrows to advance/reverse slides?' ) ?></label>
+        <input type="checkbox" name="directionNav" id="directionNav" value="1"<?php checked( $this->slideshow_defaults['directionNav'] ) ?> />
+</div>
+<div class="form-field">
+	<label for="pausePlay"><?php _e( 'Show pause/play buttons?' ) ?></label>
+        <input type="checkbox" name="pausePlay" id="pausePlay" value="1"<?php checked( $this->slideshow_defaults['pausePlay'] ) ?> />
 </div>
 <?php
 		}
@@ -461,6 +603,16 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 				$opts['size'] = $sizename;
 			}
 			
+			$cb = array( 'show_title', 'show_caption', 'randomize', 'pauseOnHover', 'controlNav', 'directionNav', 'pausePlay' );
+			foreach ( $cb as $k ) {
+				$opts[$k] = isset( $_POST[$k] ) && '1' == $_POST[$k];
+			}
+			$opts['animation'] = $_POST['animation'];
+			if ( empty( $opts['animation'] ) )
+				$opts['animation'] = 'fade';
+			$opts['slideshowSpeed'] = isset( $_POST['slideshowSpeed'] ) && is_numeric( $_POST['slideshowSpeed'] ) ? intval( $_POST['slideshowSpeed'] ) : null;
+			$opts['animationSpeed'] = isset( $_POST['animationSpeed'] ) && is_numeric( $_POST['animationSpeed'] ) ? intval( $_POST['animationSpeed'] ) : null;
+			
 			update_option( 'slideshow-term-opts-' . $term_id, $opts );
 		}
 		
@@ -468,9 +620,6 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 		 * Do the slideshow shortcode
 		 */
 		function do_shortcode( $atts ) {
-			wp_enqueue_style( 'flex-slider' );
-			wp_enqueue_script( 'robust-slideshow' );
-			
 			$atts = shortcode_atts( array( 'id' => null ), $atts );
 			if ( empty( $atts['id'] ) )
 				return;
@@ -504,7 +653,6 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 							require_once( ABSPATH . WPINC . '/class-oembed.php' );
 						
 						$e = new WP_oEmbed;
-						$rt .= '<!-- Preparing to embed the video located at ' . $meta['video-url'] . ' with a width of ' . $term->width . ' and a height of ' . $term->height . ' -->';
 						$rt .= $e->get_html( $meta['video-url'], array( 'width' => $term->width, 'height' => $term->height ) );
 						break;
 					case 'text' :
@@ -533,7 +681,11 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 				
 				$rt .= '</figure></li>';
 			}
-			$rt .= '</ul>';
+			$rt .= '</ul></div>';
+			
+			wp_enqueue_style( 'flex-slider' );
+			wp_localize_script( 'robust-slideshow', 'slideshowOpts', (array) $term );
+			wp_enqueue_script( 'robust-slideshow' );
 			
 			return $rt;
 		}

@@ -18,3 +18,9 @@
 #adminmenu #menu-posts-robust-slide.current .wp-menu-image {
 	background-position: left -32px;
 }
+
+#slideshow-image-preview img, 
+#slideshow-image-preview iframe {
+	max-width: 100%;
+	height: auto;
+}
