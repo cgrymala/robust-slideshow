@@ -10,8 +10,6 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 			'width'        => 0, 
 			'height'       => 0, 
 			'crop'         => false, 
-			'show_title'   => false, 
-			'show_caption' => false, 
 			'animation'    => 'fade', 
 			'slideshowSpeed' => 7000, 
 			'animationSpeed' => 500, 
@@ -38,8 +36,9 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 				add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_style' ) );
 			} else {
 				wp_register_style( 'flex-slider', plugins_url( '/js/flex-slider/flexslider.css', dirname( __FILE__ ) ), array(), '2.1', 'all' );
+				wp_register_style( 'robust-slideshow', plugins_url( '/css/robust-slider.css', dirname( __FILE__ ) ), array( 'flex-slider' ), '0.1.1', 'all' );
 				wp_register_script( 'flex-slider', plugins_url( '/js/flex-slider/jquery.flexslider-min.js', dirname( __FILE__ ) ), array( 'jquery' ), '2.1', true );
-				wp_register_script( 'robust-slideshow', plugins_url( '/js/init-slideshow.js', dirname( __FILE__ ) ), array( 'flex-slider' ), '0.1.8', true );
+				wp_register_script( 'robust-slideshow', plugins_url( '/js/init-slideshow.js', dirname( __FILE__ ) ), array( 'flex-slider' ), '0.1.32', true );
 			}
 			
 			add_shortcode( 'slideshow', array( $this, 'do_shortcode' ) );
@@ -97,7 +96,7 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 					'feeds'      => false, 
 					'pages'      => false, 
 				), 
-				'capability_type' => 'page',
+				'capability_type' => 'post',
 				'has_archive'   => false, 
 				'hierarchical'  => false,
 				'menu_position' => null,
@@ -130,7 +129,23 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 			$meta_vals = array_merge( apply_filters( 'robust-slideshow-default-meta', array(
 				'type' => null, 
 			) ), $meta_vals );
+			$meta_vals['show_title'] = in_array( $meta_vals['show_title'], array( '1', 1, true, 'true' ) );
+			$meta_vals['show_caption'] = in_array( $meta_vals['show_caption'], array( '1', 1, true, 'true' ) );
 ?>
+<!-- <?php var_dump( $meta_vals ) ?> -->
+<p><label for="slide-link"><?php _e( 'How should the slide link to the full post?' ) ?></label>
+	<select class="widefat" name="robust[link]" id="slide-link">
+    	<option value=""<?php selected( $meta_val['link'], null ) ?>><?php _e( 'Do not link this slide' ) ?></option>
+        <option value="whole"<?php selected( $meta_val['link'], 'whole' ) ?>><?php _e( 'Link the whole slide' ) ?></option>
+        <option value="content"<?php selected( $meta_val['link'], 'content' ) ?>><?php _e( 'Link the title and caption' ) ?></option>
+        <option value="title"<?php selected( $meta_val['link'], 'title' ) ?>><?php _e( 'Just link the title' ) ?></option>
+        <option value="caption"<?php selected( $meta_val['link'], 'caption' ) ?>><?php _e( 'Just link the caption' ) ?></option>
+    </select>
+    <br/><em><?php printf( __( 'If linked, the slide will link to the full post.%s If the whole slide, the "title and caption" or "just the caption" are linked, any links inside of the slide content will not work.<br/>If you choose a video to display within this slide, you should not choose to link the whole slide. That will interfere with the performance of the video.' ), class_exists( 'CWS_PageLinksTo' ) ? __( ' If you would like the slide to link somewhere else, use the Page Links To box below.' ) : ' ' ) ?></em></p>
+<p><input type="checkbox" name="robust[showtitle]" id="show-title" value="1"<?php checked( $meta_vals['show_title'] ) ?> />
+	<label for="show-title"><?php _e( 'Display slide title?' ) ?></label></p>
+<p><input type="checkbox" name="robust[showcaption]" id="show-caption" value="1"<?php checked( $meta_vals['show_caption'] ) ?> />
+	<label for="show-caption"><?php _e( 'Display slide content as caption?' ) ?></label></p>
 <p><label for="slide-content-type"><?php _e( 'What type of item should display in the background of the slide?' ) ?></label> 
 	<select class="widefat" name="robust[type]" id="slide-content-type">
     	<option value=""<?php selected( $meta_vals['type'], null ) ?>><?php _e( 'Use the featured image for this post' ) ?></option>
@@ -251,7 +266,7 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 				return;
 			if ( 'robust-slide' !== $_POST['post_type'] )
 				return/* wp_die( 'The post type was wrong' )*/;
-			if ( ! current_user_can( 'edit_robust-slide', $post_id ) )
+			if ( ! current_user_can( 'edit_post', $post_id ) )
 				return/* wp_die( 'Wrong permissions' )*/;
 				
 			if ( ! wp_verify_nonce( $_POST['_slide_content_nonce'], 'slide-content-meta' ) )
@@ -262,6 +277,16 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 			
 			$vals = array();
 			$input = $_POST['robust'];
+			
+			if ( isset( $input['link'] ) )
+				$vals['link'] = $input['link'];
+			
+			$vals['show_title'] = $vals['show_caption'] = false;
+			if ( isset( $input['showtitle'] ) && '1' == $input['showtitle'] )
+				$vals['show_title'] = true;
+			if ( isset( $input['showcaption'] ) && '1' == $input['showcaption'] )
+				$vals['show_caption'] = true;
+			
 			if ( isset( $input['type'] ) )
 				$vals['type'] = $input['type'];
 			if ( isset( $input['video-url'] ) && 'video' == $input['type'] )
@@ -269,7 +294,7 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 			if ( isset( $input['image-id'] ) && 'other-image' == $input['type'] )
 				$vals['image-id'] = $input['image-id'];
 			
-			update_post_meta( $post_id, 'slide-content-meta', $input );
+			$tmp = update_post_meta( $post_id, 'slide-content-meta', $vals );
 		}
 		
 		/**
@@ -376,22 +401,6 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
             	<h3><?php _e( 'Slideshow Appearance' ) ?></h3>
             </th>
         </tr>
-		<tr class="form-field">
-			<th scope="row" valign="top">
-            	<label for="show_title"><?php _e( 'Display slide title in slideshow?' ) ?></label>
-            </th>
-			<td>
-            	<input type="checkbox" name="show_title" id="show_title" value="1"<?php checked( $term->show_title ) ?> />
-            </td>
-		</tr>
-		<tr class="form-field">
-			<th scope="row" valign="top">
-            	<label for="show_caption"><?php _e( 'Display slide content as caption?' ) ?></label>
-            </th>
-			<td>
-            	<input type="checkbox" name="show_caption" id="show_caption" value="1"<?php checked( $term->show_caption ) ?> />
-            </td>
-		</tr>
 		<tr>
         	<th scope="col" colspan="2">
             	<h3><?php _e( 'Slideshow Behavior' ) ?></h3>
@@ -506,15 +515,6 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
     <label for="tag-crop"><?php _e( 'Crop images to these exact dimensions?' ) ?></label>
 		<input type="checkbox" name="crop" id="tag-crop" value="1" />
 </div>
-<h3><?php _e( 'Slideshow Appearance' ) ?></h3>
-<div class="form-field">
-	<label for="show_title"><?php _e( 'Display slide title in slideshow?' ) ?></label> 
-        <input type="checkbox" name="show_title" id="show_title" value="1"<?php checked( $this->slideshow_defaults['show_title'] ) ?> />
-</div>
-<div class="form-field">
-	<label for="show_caption"><?php _e( 'Display slide content as caption?' ) ?></label>
-        <input type="checkbox" name="show_caption" id="show_caption" value="1"<?php checked( $this->slideshow_defaults['show_caption'] ) ?> />
-</div>
 <h3><?php _e( 'Slideshow Behavior' ) ?></h3>
 <div class="form-field">
 	<label for="animation"><?php _e( 'Slide transition:' ) ?></label>
@@ -603,7 +603,7 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 				$opts['size'] = $sizename;
 			}
 			
-			$cb = array( 'show_title', 'show_caption', 'randomize', 'pauseOnHover', 'controlNav', 'directionNav', 'pausePlay' );
+			$cb = array( 'randomize', 'pauseOnHover', 'controlNav', 'directionNav', 'pausePlay' );
 			foreach ( $cb as $k ) {
 				$opts[$k] = isset( $_POST[$k] ) && '1' == $_POST[$k];
 			}
@@ -629,6 +629,8 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 			else
 				$term = get_term_by( 'slug', $atts['id'], 'robust-slideshow' );
 			
+			$term->pauseOnAction = true;
+			
 			if ( empty( $term ) )
 				return;
 			
@@ -646,13 +648,22 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 			$rt = '<div class="flexslider"><ul class="robust-slideshow slides">';
 			foreach ( $slides as $slide ) {
 				$meta = get_post_meta( $slide->ID, 'slide-content-meta', true );
+				$meta['show_title'] = in_array( $meta['show_title'], array( '1', 1, true, 'true' ) );
+				$meta['show_caption'] = in_array( $meta['show_caption'], array( '1', 1, true, 'true' ) );
 				$rt .= '<li class="robust-slide"><figure>';
+				if ( 'whole' == $meta['link'] ) {
+					$rt .= '<a href="' . get_permalink( $slide->ID ) . '">';
+				}
 				switch( $meta['type'] ) {
 					case 'video' :
 						if ( ! class_exists( 'WP_oEmbed' ) )
 							require_once( ABSPATH . WPINC . '/class-oembed.php' );
 						
+						$meta['video-url'] = add_query_arg( 'wmode', 'transparent', $meta['video-url'] );
+						/*$meta['video-url'] = esc_url( $meta['video-url'] );*/
+						
 						$e = new WP_oEmbed;
+						/*$rt .= "\n<!-- Preparing to oEmbed the following URL: " . $meta['video-url'] . " -->\n";*/
 						$rt .= $e->get_html( $meta['video-url'], array( 'width' => $term->width, 'height' => $term->height ) );
 						break;
 					case 'text' :
@@ -670,22 +681,54 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 						break;
 				}
 				
-				if ( ! empty( $slide->post_title ) || ! empty( $slide->post_content ) ) {
+				if ( ( $meta['show_title'] && ! empty( $slide->post_title ) ) || ( $meta['show_caption'] && ! empty( $slide->post_content ) ) ) {
 					$rt .= '<figcaption class="flex-caption">';
-					if ( ! empty( $slide->post_title ) )
-						$rt .= '<h1>' . apply_filters( 'the_title', $slide->post_title ) . '</h1>';
-					if ( ! empty( $slide->post_content ) )
-						$rt .= '<div>' . apply_filters( 'the_content', $slide->post_content ) . '</div>';
+					if ( 'content' == $meta['link'] ) {
+						$rt .= '<a href="' . get_permalink( $slide->ID ) . '">';
+					}
+					if ( $meta['show_title'] && ! empty( $slide->post_title ) ) {
+						$rt .= '<h1>';
+						if ( 'title' == $meta['link'] ) {
+							$rt .= '<a href="' . get_permalink( $slide->ID ) . '">';
+						}
+						$rt .= apply_filters( 'the_title', $slide->post_title );
+						if ( 'title' == $meta['link'] ) {
+							$rt .= '</a>';
+						}
+						$rt .= '</h1>';
+					}
+					if ( $meta['show_caption'] && ! empty( $slide->post_content ) ) {
+						$rt .= '<div>';
+						if ( 'caption' == $meta['link'] ) {
+							$rt .= '<a href="' . get_permalink( $slide->ID ) . '">';
+						}
+						$rt .= apply_filters( 'the_content', $slide->post_content );
+						if ( 'caption' == $meta['link'] ) {
+							$rt .= '</a>';
+						}
+						$rt .= '</div>';
+					}
+					
+					if ( 'content' == $meta['link'] ) {
+						$rt .= '</a>';
+					}
 					$rt .= '</figcaption>';
+				}
+				
+				if ( 'whole' == $meta['link'] ) {
+					$rt .= '</a>';
 				}
 				
 				$rt .= '</figure></li>';
 			}
 			$rt .= '</ul></div>';
 			
-			wp_enqueue_style( 'flex-slider' );
+			wp_enqueue_style( 'robust-slideshow' );
 			wp_localize_script( 'robust-slideshow', 'slideshowOpts', (array) $term );
 			wp_enqueue_script( 'robust-slideshow' );
+			/*wp_enqueue_style( 'anything-theme' );
+			wp_enqueue_script( 'robust-slideshow' );
+			wp_enqueue_style( 'robust-slideshow' );*/
 			
 			return $rt;
 		}

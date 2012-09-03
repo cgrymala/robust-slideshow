@@ -1,4 +1,8 @@
 jQuery( function() {
+	jQuery( '.flexslider iframe' ).each( function() {
+		jQuery( this ).attr( 'src', jQuery( this ).attr( 'src' ) + '&wmode=transparent' );
+		jQuery( this ).attr( 'wmode', 'transparent' );
+	} );
 	if( typeof slideshowOpts === 'undefined' ) {
 		slideshowOpts = {
 			'controlNav' : false, 
@@ -8,7 +12,8 @@ jQuery( function() {
 			'pausePlay' : false, 
 			'animation' : 'fade', 
 			'slideshowSpeed' : 7000, 
-			'animationSpeed' : 500
+			'animationSpeed' : 500,
+			'pauseOnAction' : true
 		};
 	}
 	if ( ! 'show_title' in slideshowOpts )

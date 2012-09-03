@@ -1,0 +1,18 @@
+@charset "utf-8";
+/* CSS Document */
+
+.flexslider figure {
+	position: relative;
+}
+
+.flexslider figure > * {
+	z-index: 90;
+}
+
+.flexslider figure > figcaption {
+	position: absolute;
+	left: 0;
+	top: 0;
+	z-index: 99;
+	width: 30%;
+}
