@@ -18,6 +18,8 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 			'controlNav'   => false, 
 			'directionNav' => false, 
 			'pausePlay'    => false, 
+			'video'        => true, 
+			'manualPause'  => true, 
 		);
 		
 		/**
@@ -36,9 +38,9 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 				add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_style' ) );
 			} else {
 				wp_register_style( 'flex-slider', plugins_url( '/js/flex-slider/flexslider.css', dirname( __FILE__ ) ), array(), '2.1', 'all' );
-				wp_register_style( 'robust-slideshow', plugins_url( '/css/robust-slider.css', dirname( __FILE__ ) ), array( 'flex-slider' ), '0.1.1', 'all' );
+				wp_register_style( 'robust-slideshow', plugins_url( '/css/robust-slider.css', dirname( __FILE__ ) ), array( 'flex-slider' ), '0.1.35', 'all' );
 				wp_register_script( 'flex-slider', plugins_url( '/js/flex-slider/jquery.flexslider-min.js', dirname( __FILE__ ) ), array( 'jquery' ), '2.1', true );
-				wp_register_script( 'robust-slideshow', plugins_url( '/js/init-slideshow.js', dirname( __FILE__ ) ), array( 'flex-slider' ), '0.1.32', true );
+				wp_register_script( 'robust-slideshow', plugins_url( '/js/init-slideshow.js', dirname( __FILE__ ) ), array( 'flex-slider' ), '0.1.96', true );
 			}
 			
 			add_shortcode( 'slideshow', array( $this, 'do_shortcode' ) );
@@ -634,8 +636,8 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 			if ( empty( $term ) )
 				return;
 			
-			$slides = get_posts( array( 'robust-slideshow' => $term->slug, 'post_type' => 'robust-slide', 'numberposts' => -1 ) );
-			if ( empty( $slides ) )
+			$slide_query = new WP_Query( array( 'robust-slideshow' => $term->slug, 'post_type' => 'robust-slide', 'posts_per_page' => -1, 'orderby' => 'menu_order' ) );
+			if ( ! $slide_query->have_posts() )
 				return;
 			
 			$slide_size = empty( $term->size ) ? array( $term->width, $term->height ) : $term->size;
@@ -646,13 +648,16 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 			}
 			
 			$rt = '<div class="flexslider"><ul class="robust-slideshow slides">';
-			foreach ( $slides as $slide ) {
-				$meta = get_post_meta( $slide->ID, 'slide-content-meta', true );
+			while( $slide_query->have_posts() ) : $slide_query->the_post();
+				global $more, $post;
+				$oldmore = $more;
+				$more = 0;
+				$meta = get_post_meta( get_the_ID(), 'slide-content-meta', true );
 				$meta['show_title'] = in_array( $meta['show_title'], array( '1', 1, true, 'true' ) );
 				$meta['show_caption'] = in_array( $meta['show_caption'], array( '1', 1, true, 'true' ) );
-				$rt .= '<li class="robust-slide"><figure>';
+				$rt .= '<li class="robust-slide"><figure id="slide-' . esc_attr( $post->post_name ) . '">';
 				if ( 'whole' == $meta['link'] ) {
-					$rt .= '<a href="' . get_permalink( $slide->ID ) . '">';
+					$rt .= '<a href="' . get_permalink() . '">';
 				}
 				switch( $meta['type'] ) {
 					case 'video' :
@@ -664,7 +669,7 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 						
 						$e = new WP_oEmbed;
 						/*$rt .= "\n<!-- Preparing to oEmbed the following URL: " . $meta['video-url'] . " -->\n";*/
-						$rt .= $e->get_html( $meta['video-url'], array( 'width' => $term->width, 'height' => $term->height ) );
+						$rt .= $e->get_html( $meta['video-url'], array( 'width' => ( $term->width * .5 ), 'height' => $term->height ) );
 						break;
 					case 'text' :
 						break;
@@ -675,34 +680,34 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 						}
 					case '' :
 					default : 
-						if ( has_post_thumbnail( $slide->ID ) )
-							$rt .= get_the_post_thumbnail( $slide->ID, $slide_size );
+						if ( has_post_thumbnail() )
+							$rt .= get_the_post_thumbnail( get_the_ID(), $slide_size );
 						
 						break;
 				}
 				
-				if ( ( $meta['show_title'] && ! empty( $slide->post_title ) ) || ( $meta['show_caption'] && ! empty( $slide->post_content ) ) ) {
+				if ( ( $meta['show_title'] && ! empty( $post->post_title ) ) || ( $meta['show_caption'] && ! empty( $post->post_content ) ) ) {
 					$rt .= '<figcaption class="flex-caption">';
 					if ( 'content' == $meta['link'] ) {
-						$rt .= '<a href="' . get_permalink( $slide->ID ) . '">';
+						$rt .= '<a href="' . get_permalink() . '">';
 					}
-					if ( $meta['show_title'] && ! empty( $slide->post_title ) ) {
+					if ( $meta['show_title'] && ! empty( $post->post_title ) ) {
 						$rt .= '<h1>';
 						if ( 'title' == $meta['link'] ) {
-							$rt .= '<a href="' . get_permalink( $slide->ID ) . '">';
+							$rt .= '<a href="' . get_permalink() . '">';
 						}
-						$rt .= apply_filters( 'the_title', $slide->post_title );
+						$rt .= get_the_title();
 						if ( 'title' == $meta['link'] ) {
 							$rt .= '</a>';
 						}
 						$rt .= '</h1>';
 					}
-					if ( $meta['show_caption'] && ! empty( $slide->post_content ) ) {
+					if ( $meta['show_caption'] && ! empty( $post->post_content ) ) {
 						$rt .= '<div>';
 						if ( 'caption' == $meta['link'] ) {
-							$rt .= '<a href="' . get_permalink( $slide->ID ) . '">';
+							$rt .= '<a href="' . get_permalink() . '">';
 						}
-						$rt .= apply_filters( 'the_content', $slide->post_content );
+						$rt .= get_the_content();
 						if ( 'caption' == $meta['link'] ) {
 							$rt .= '</a>';
 						}
@@ -720,8 +725,10 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 				}
 				
 				$rt .= '</figure></li>';
-			}
+			endwhile;
 			$rt .= '</ul></div>';
+			wp_reset_postdata();
+			$more = $oldmore;
 			
 			wp_enqueue_style( 'robust-slideshow' );
 			wp_localize_script( 'robust-slideshow', 'slideshowOpts', (array) $term );

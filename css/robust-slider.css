@@ -1,8 +1,34 @@
 @charset "utf-8";
 /* CSS Document */
+/*.header-home .home-sidebar {
+	display: none;
+}*/
+
+.home-banner .flexslider, 
+.flexslider figure, 
+.flexslider iframe {
+	margin: 0;
+	padding: 0;
+	border: none;
+	border-radius: 0;
+}
+
+.flexslider .slides figure > img, 
+.flexslider .slides figure > a > img {
+	width: auto;
+	max-width: 100%;
+	height: auto;
+}
 
 .flexslider figure {
 	position: relative;
+	width: 100%;
+}
+
+.flexslider iframe, 
+.flexslider .slides img {
+	display: block;
+	margin: 0 0 0 auto;
 }
 
 .flexslider figure > * {
@@ -10,9 +36,72 @@
 }
 
 .flexslider figure > figcaption {
+	font-family: Georgia, "Times New Roman", Times, serif;
+	color: #313131;
+	font-size: 1.142857142857143em;
+	text-align: left;
 	position: absolute;
 	left: 0;
 	top: 0;
 	z-index: 99;
-	width: 30%;
+	width: 40%;
+	padding: 5%;
+	background: transparent;
+	background: rgba( 255, 255, 255, .8 );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=#CCFFFFFF,endColorstr=#CCFFFFFF);
+}
+
+.flexslider figure > figcaption h1 {
+	font-family: "Rockwell", Georgia, "Times New Roman", Times, serif;
+	font-size: 1.625em;
+	font-weight: bolder;
+	margin-bottom: .25em;
+	line-height: 1.2em;
+	color: #0361ab;
+}
+
+.flexslider figure > figcaption .more-link {
+	display: block;
+	font-size: 1.125em;
+	font-weight: bolder;
+}
+
+.flex-prev, 
+.flex-next {
+	z-index: 156;
+}
+
+.flex-pauseplay {
+	position: absolute;
+	bottom: 15px;
+	left: 25px;
+	z-index: 155;
+}
+
+.flex-direction-nav .flex-prev, 
+.flex-direction-nav .flex-next, 
+.flex-pauseplay .flex-pause, 
+.flex-pauseplay .flex-play {
+	display: block;
+	background: url(../images/bg_direction_nav.png) no-repeat;
+	width: 30px;
+	height: 30px;
+	overflow: hidden;
+	text-indent: -9999em;
+}
+
+.flex-direction-nav .flex-prev {
+	background-position: left top;
+}
+
+.flex-direction-nav .flex-next {
+	background-position: -31px top;
+}
+
+.flex-pauseplay .flex-pause {
+	background-position: -62px top;
+}
+
+.flex-pauseplay .flex-play {
+	background-position: -93px top;
 }
