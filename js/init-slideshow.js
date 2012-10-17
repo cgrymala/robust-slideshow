@@ -62,6 +62,18 @@ jQuery( function() {
 	}
 	/*slideshowOpts.video = true;*/
 	slideshowOpts.start = function() { initYTPlayers() };
+	slideshowOpts.before = function() {
+		if ( typeof( players ) === 'undefined' )
+			return;
+		
+		for ( var i in players ) {
+			var player = players[i];
+			if ( 'pauseVideo' in player ) {
+				player.pauseVideo();
+			}
+		}
+		return true;
+	};
 	
 	var mySlider = jQuery( '.flexslider' ).flexslider( slideshowOpts );
 	setTimeout( initYTPlayers, 100 );

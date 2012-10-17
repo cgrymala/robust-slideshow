@@ -1,7 +1,7 @@
 <?php
 /**
  * Define the main class for the Robust Slideshow plugin
- * @version 0.1
+ * @version 1.1
  */
 if ( ! class_exists( 'robust_slideshow' ) ) {
 	class robust_slideshow {
@@ -38,9 +38,9 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 				add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_style' ) );
 			} else {
 				wp_register_style( 'flex-slider', plugins_url( '/js/flex-slider/flexslider.css', dirname( __FILE__ ) ), array(), '2.1', 'all' );
-				wp_register_style( 'robust-slideshow', plugins_url( '/css/robust-slider.css', dirname( __FILE__ ) ), array( 'flex-slider' ), '0.1.35', 'all' );
+				wp_register_style( 'robust-slideshow', plugins_url( '/css/robust-slider.css', dirname( __FILE__ ) ), array( 'flex-slider' ), '1.1', 'all' );
 				wp_register_script( 'flex-slider', plugins_url( '/js/flex-slider/jquery.flexslider-min.js', dirname( __FILE__ ) ), array( 'jquery' ), '2.1', true );
-				wp_register_script( 'robust-slideshow', plugins_url( '/js/init-slideshow.js', dirname( __FILE__ ) ), array( 'flex-slider' ), '0.1.96', true );
+				wp_register_script( 'robust-slideshow', plugins_url( '/js/init-slideshow.js', dirname( __FILE__ ) ), array( 'flex-slider' ), '1.1', true );
 			}
 			
 			add_shortcode( 'slideshow', array( $this, 'do_shortcode' ) );
@@ -707,7 +707,7 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 						if ( 'caption' == $meta['link'] ) {
 							$rt .= '<a href="' . get_permalink() . '">';
 						}
-						$rt .= get_the_content();
+						$rt .= get_the_content( 'Read more' );
 						if ( 'caption' == $meta['link'] ) {
 							$rt .= '</a>';
 						}

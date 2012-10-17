@@ -3,7 +3,7 @@ Contributors: cgrymala
 Tags: slideshow, feature, video, image
 Requires at least: 3.4
 Tested up to: 3.4.1
-Stable tag: 0.1
+Stable tag: 1.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,9 @@ This plugin was created for the University of Florida Engineering school to assi
 1. The admin area
 
 == Changelog ==
+
+= 1.1 =
+* Add feature that auto-pauses YouTube videos when a slide advances
 
 = 0.1 =
 * First version of this plugin
