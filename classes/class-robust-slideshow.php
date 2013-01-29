@@ -730,6 +730,8 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 			wp_reset_postdata();
 			$more = $oldmore;
 			
+			$term->script_origin = get_bloginfo( 'siteurl' );
+			
 			wp_enqueue_style( 'robust-slideshow' );
 			wp_localize_script( 'robust-slideshow', 'slideshowOpts', (array) $term );
 			wp_enqueue_script( 'robust-slideshow' );

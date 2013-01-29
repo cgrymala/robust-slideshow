@@ -40,7 +40,7 @@ function onPlayerStateChange( event ) {
 
 jQuery( function() {
 	jQuery( '.flexslider iframe' ).each( function() {
-		jQuery( this ).attr( 'src', jQuery( this ).attr( 'src' ) + '&wmode=transparent&enablejsapi=1&origin=http://ufleng.t321.biz' );
+		jQuery( this ).attr( 'src', jQuery( this ).attr( 'src' ) + '&wmode=transparent&enablejsapi=1&origin=' + slideshowOpts.script_origin );
 		jQuery( this ).attr( 'wmode', 'transparent' );
 	} );
 	
@@ -60,7 +60,7 @@ jQuery( function() {
 	if ( 'width' in slideshowOpts && 'height' in slideshowOpts ) {
 		jQuery( '.flexslider' ).css( { 'width' : slideshowOpts.width, 'height' : slideshowOpts.height } );
 	}
-	/*slideshowOpts.video = true;*/
+	slideshowOpts.video = true;
 	slideshowOpts.start = function() { initYTPlayers() };
 	slideshowOpts.before = function() {
 		if ( typeof( players ) === 'undefined' )
@@ -76,7 +76,7 @@ jQuery( function() {
 	};
 	
 	var mySlider = jQuery( '.flexslider' ).flexslider( slideshowOpts );
-	setTimeout( initYTPlayers, 100 );
+	/*setTimeout( initYTPlayers, 100 );*/
 	function initYTPlayers() {
 		if ( jQuery( '.flexslider iframe[src*="youtube.com"]' ).length <= 0 ) {
 			return;
