@@ -137,11 +137,11 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 <!-- <?php var_dump( $meta_vals ) ?> -->
 <p><label for="slide-link"><?php _e( 'How should the slide link to the full post?' ) ?></label>
 	<select class="widefat" name="robust[link]" id="slide-link">
-    	<option value=""<?php selected( $meta_val['link'], null ) ?>><?php _e( 'Do not link this slide' ) ?></option>
-        <option value="whole"<?php selected( $meta_val['link'], 'whole' ) ?>><?php _e( 'Link the whole slide' ) ?></option>
-        <option value="content"<?php selected( $meta_val['link'], 'content' ) ?>><?php _e( 'Link the title and caption' ) ?></option>
-        <option value="title"<?php selected( $meta_val['link'], 'title' ) ?>><?php _e( 'Just link the title' ) ?></option>
-        <option value="caption"<?php selected( $meta_val['link'], 'caption' ) ?>><?php _e( 'Just link the caption' ) ?></option>
+    	<option value=""<?php selected( $meta_vals['link'], null ) ?>><?php _e( 'Do not link this slide' ) ?></option>
+        <option value="whole"<?php selected( $meta_vals['link'], 'whole' ) ?>><?php _e( 'Link the whole slide' ) ?></option>
+        <option value="content"<?php selected( $meta_vals['link'], 'content' ) ?>><?php _e( 'Link the title and caption' ) ?></option>
+        <option value="title"<?php selected( $meta_vals['link'], 'title' ) ?>><?php _e( 'Just link the title' ) ?></option>
+        <option value="caption"<?php selected( $meta_vals['link'], 'caption' ) ?>><?php _e( 'Just link the caption' ) ?></option>
     </select>
     <br/><em><?php printf( __( 'If linked, the slide will link to the full post.%s If the whole slide, the "title and caption" or "just the caption" are linked, any links inside of the slide content will not work.<br/>If you choose a video to display within this slide, you should not choose to link the whole slide. That will interfere with the performance of the video.' ), class_exists( 'CWS_PageLinksTo' ) ? __( ' If you would like the slide to link somewhere else, use the Page Links To box below.' ) : ' ' ) ?></em></p>
 <p><input type="checkbox" name="robust[showtitle]" id="show-title" value="1"<?php checked( $meta_vals['show_title'] ) ?> />
