@@ -1,7 +1,7 @@
 <?php
 /**
  * Define the main class for the Robust Slideshow plugin
- * @version 1.2
+ * @version 1.3
  */
 if ( ! class_exists( 'robust_slideshow' ) ) {
 	class robust_slideshow {
@@ -21,6 +21,7 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 			'video'        => true, 
 			'manualPause'  => true, 
 		);
+		var $version = '1.3';
 		
 		/**
 		 * Create the robust_slideshow object
@@ -53,16 +54,16 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 			if ( is_admin() ) {
 				wp_register_script( 'jquery-bbq', plugins_url( '/js/jquery-bbq/jquery.ba-bbq.min.js', dirname( __FILE__ ) ), array( 'jquery' ), '1.3-pre', true );
 				wp_register_script( 'robust-slideshow-metabox-script', plugins_url( '/js/metabox-scripts.js', dirname( __FILE__ ) ), array( 'jquery-bbq' ), '0.1.32', true );
-				wp_register_script( 'edit-robust-slideshow', plugins_url( '/js/slideshow-edit.js', dirname( __FILE__ ) ), array( 'jquery' ), '0.1.3', true );
-				wp_register_style( 'robust-slideshow-admin-styles', plugins_url( '/css/admin-styles.css', dirname( __FILE__ ) ), '0.1.6', array(), 'all' );
+				wp_register_script( 'edit-robust-slideshow', plugins_url( '/js/slideshow-edit.js', dirname( __FILE__ ) ), array( 'jquery' ), $this->version, true );
+				wp_register_style( 'robust-slideshow-admin-styles', plugins_url( '/css/admin-styles.css', dirname( __FILE__ ) ), $this->version, array(), 'all' );
 				add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_style' ) );
 			} else {
 				wp_register_style( 'flex-slider', plugins_url( '/js/flex-slider/flexslider.css', dirname( __FILE__ ) ), array(), '2.1', 'all' );
-				wp_register_style( 'robust-slideshow', plugins_url( '/css/robust-slider.css', dirname( __FILE__ ) ), array( 'flex-slider' ), '1.1', 'all' );
+				wp_register_style( 'robust-slideshow', plugins_url( '/css/robust-slider.css', dirname( __FILE__ ) ), array( 'flex-slider' ), $this->version, 'all' );
 				wp_register_style( 'nyromodal', plugins_url( '/js/nyromodal/styles/nyroModal.css', dirname( __FILE__ ) ), array(), '2014-10-17', 'all' );
 				wp_register_script( 'flex-slider', plugins_url( '/js/flex-slider/jquery.flexslider-min.js', dirname( __FILE__ ) ), array( 'jquery' ), '2.1', true );
 				wp_register_script( 'nyromodal', plugins_url( '/js/nyromodal/js/jquery.nyroModal.js', dirname( __FILE__ ) ), array( 'jquery' ), '2014-10-17', true );
-				wp_register_script( 'robust-slideshow', plugins_url( '/js/init-slideshow.js', dirname( __FILE__ ) ), array( 'flex-slider', 'nyromodal' ), '1.1.15', true );
+				wp_register_script( 'robust-slideshow', plugins_url( '/js/init-slideshow.js', dirname( __FILE__ ) ), array( 'flex-slider', 'nyromodal' ), $this->version, true );
 			}
 		}
 		

@@ -3,7 +3,7 @@ Contributors: cgrymala
 Tags: slideshow, feature, video, image
 Requires at least: 3.4
 Tested up to: 3.4.1
-Stable tag: 1.1
+Stable tag: 1.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,9 @@ This plugin was created for the University of Florida Engineering school to assi
 1. The admin area
 
 == Changelog ==
+= 1.3 =
+* Rewrite feature that auto-paused slideshow while video is playing
+* Add modal window functionality
 
 = 1.1 =
 * Add feature that auto-pauses YouTube videos when a slide advances

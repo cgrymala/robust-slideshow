@@ -2,7 +2,7 @@
 /*
 Plugin Name: Robust Slideshows
 Description: Assists in the creation of robust slideshows, which can include photos, videos and HTML
-Version: 1.2
+Version: 1.3
 Author: Ten-321 Enterprises
 Author URI: http://ten-321.com
 License: GPL2
