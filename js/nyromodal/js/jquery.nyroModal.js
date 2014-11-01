@@ -2,6 +2,27 @@
  * nyroModal v2.0.0
  * Core
  *
+ * Commit 61895b6ee8cb543cfdaa17d703ec6bcd338fec5f (01/16/2013) * 
+ * 
+ * Included parts:
+ * - anims.fade
+ * - filters.title
+ * - filters.gallery
+ * - filters.link
+ * - filters.dom
+ * - filters.data
+ * - filters.image
+ * - filters.swf
+ * - filters.form
+ * - filters.formFile
+ * - filters.iframe
+ * - filters.iframeForm
+ * - filters.embedly
+ */
+/*
+ * nyroModal v2.0.0
+ * Core
+ *
  */
 jQuery(function($, undefined) {
 
@@ -45,7 +66,6 @@ jQuery(function($, undefined) {
 			anims: {},	// Sepcific animations functions
 			loadFilter: undefined,	// Name of the filter used for loading
 
-			enabled: true, // Indicates if it's enabled or not
 			modal: false,	// Indicates if it's a modal window or not
 			closeOnEscape: true,	// Indicates if the modal should close on Escape key
 			closeOnClick: true,	// Indicates if a click on the background should close the modal
@@ -99,13 +119,12 @@ jQuery(function($, undefined) {
 				h: undefined,		// height
 				minW: undefined,	// minimum Width
 				minH: undefined,	// minimum height
-				maxW: undefined,	// maximum width
-				maxH: undefined,	// maximum height
 				wMargin: undefined,	// Horizontal margin
 				hMargin: undefined	// Vertical margin
 			},
 			anim: {	// Animation names to use
 				def: undefined,			// Default animation set to use if sspecific are not defined or doesn't exist
+
 				showBg: undefined,		// Set to use for showBg animation
 				hideBg: undefined,		// Set to use for hideBg animation
 				showLoad: undefined,	// Set to use for showLoad animation
@@ -122,7 +141,7 @@ jQuery(function($, undefined) {
 			_opened: false,	// Indicates if the modal was opened (useful for stacking)
 			_loading: false,	// Indicates if the loading is shown
 			_animated: false,	// Indicates if the modal is currently animated
-			_transition: false,	//Indicates if the modal is in transition
+			_transition: false,	// Indicates if the modal is in transition
 			_needClose: false, // Indicates if the modal should close after current animation
 			_nmOpener: undefined,	// nmObj of the modal that opened the current one in non stacking mode
 			_nbContentLoading: 0,	// Counter for contentLoading call
@@ -135,8 +154,6 @@ jQuery(function($, undefined) {
 			},
 			// Open the modal
 			open: function() {
-				if (!this.enabled)
-					return false;
 				if (this._nmOpener)
 					this._nmOpener._close();
 				this.getInternal()._pushStack(this.opener);
@@ -188,12 +205,6 @@ jQuery(function($, undefined) {
 			size: function() {
 				var maxHeight = this.getInternal().fullSize.viewH - this.sizes.hMargin,
 					maxWidth = this.getInternal().fullSize.viewW - this.sizes.wMargin;
-				
-				if (typeof this.sizes.maxH !== 'undefined' && this.sizes.maxH < maxHeight) 
-					maxHeight = this.sizes.maxH;
-				if (typeof this.sizes.maxW !== 'undefined' && this.sizes.maxW < maxWidth) 
-					maxWidth = this.sizes.maxW;
-				
 				if (this.sizes.minW && this.sizes.minW > this.sizes.w)
 					this.sizes.w = this.sizes.minW;
 				if (this.sizes.minH && this.sizes.minH > this.sizes.h)
@@ -352,7 +363,7 @@ jQuery(function($, undefined) {
 					.append(this._filterScripts(html))
 					.prepend(this.header)
 					.append(this.footer)
-					.wrapInner($('<div />', {'class': 'nyroModal'+$.ucfirst(this.loadFilter)}));
+					.wrapInner($('<div />', {'class': 'nyroModal'+ucfirst(this.loadFilter)}));
 
 				// Store the size of the element
 				this.sizes.initW = this.sizes.w = this.elts.hidden.width();
@@ -428,7 +439,7 @@ jQuery(function($, undefined) {
 				} else {
 					$b.trigger(fct+'.nyroModal', [this, prm]);
 				}
-				var ret = [],
+				var ret = {},
 					self = this;
 				$.each(this.filters, function(i, f) {
 					ret[f] = self._callFilter(f, fct, prm);
@@ -455,7 +466,7 @@ jQuery(function($, undefined) {
 			// - clb: Callback once the animation is done
 			_callAnim: function(fct, clb) {
 				this.getInternal()._debug(fct, clb);
-				this._callFilters('before'+$.ucfirst(fct));
+				this._callFilters('before'+ucfirst(fct));
 				if (!this._animated) {
 					this._animated = true;
 					if (!$.isFunction(clb)) clb = $.noop;
@@ -469,7 +480,7 @@ jQuery(function($, undefined) {
 					}
 					curFct(this, $.proxy(function() {
 							this._animated = false;
-							this._callFilters('after'+$.ucfirst(fct));
+							this._callFilters('after'+ucfirst(fct));
 							clb();
 							if (this._needClose)
 								setTimeout($.proxy(function() {this.close();}, this), 50);
@@ -684,11 +695,9 @@ jQuery(function($, undefined) {
 				nm._callFilters('initFilters');
 				nm._callFilters('init');
 				nm.opener
-					.off('nyroModal.nyroModal nmDisable.nyroModal nmEnable.nyroModal nmClose.nyroModal nmResize.nyroModal')
+					.off('nyroModal.nyroModal nmClose.nyroModal nmResize.nyroModal')
 					.on({
 						'nyroModal.nyroModal': 	function() { nm.open(); return false;},
-						'nmDisable.nyroModal': 	function() { nm.enabled = false; return false;},
-						'nmEnable.nyroModal': 	function() { nm.enabled = true; return false;},
 						'nmClose.nyroModal': 	function() { nm.close(); return false;},
 						'nmResize.nyroModal': 	function() { nm.resize(); return false;}
 					});
@@ -967,19 +976,839 @@ jQuery(function($, undefined) {
 	jQuery.fn[sr] = function(fn){  return fn ? this.on('resize', debounce(fn)) : this.trigger(sr); };
 
 })(jQuery,'smartresize');
-
 // ucFirst
-// jquery plugin by: Baris Aydinoglu (http://baris.aydinoglu.info)
-(function($) {
-	$.ucfirst = function(str) {
-		// http://kevin.vanzonneveld.net
-		// +   original by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
-		// +   bugfixed by: Onno Marsman
-		// +   improved by: Brett Zamir (http://brett-zamir.me)
-		// *     example 1: ucfirst('kevin van zonneveld');
-		// *     returns 1: 'Kevin van zonneveld'
-		str+= '';
-		var f = str.charAt(0).toUpperCase();
-		return f + str.substr(1);
-	};
-})(jQuery);
+function ucfirst(str) {
+    // http://kevin.vanzonneveld.net
+    // +   original by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+    // +   bugfixed by: Onno Marsman
+    // +   improved by: Brett Zamir (http://brett-zamir.me)
+    // *     example 1: ucfirst('kevin van zonneveld');
+    // *     returns 1: 'Kevin van zonneveld'
+    str += '';
+    var f = str.charAt(0).toUpperCase();
+    return f + str.substr(1);
+}
+/*
+ * nyroModal v2.0.0
+ * 
+ * Fade animations
+ * 
+ * Depends:
+ * 
+ */
+jQuery(function($, undefined) {
+	$.nmAnims({
+		fade: {
+			showBg: function(nm, clb) {
+				nm.elts.bg.fadeTo(250, 0.7, clb);
+			},
+			hideBg: function(nm, clb) {
+				nm.elts.bg.fadeOut(clb);
+			},
+			showLoad: function(nm, clb) {
+				nm.elts.load.fadeIn(clb);
+			},
+			hideLoad: function(nm, clb) {
+				nm.elts.load.fadeOut(clb);
+			},
+			showCont: function(nm, clb) {
+				nm.elts.cont.fadeIn(clb);
+			},
+			hideCont: function(nm, clb) {
+				nm.elts.cont.css('overflow', 'hidden').fadeOut(clb);
+			},
+			showTrans: function(nm, clb) {
+				nm.elts.load
+					.css({
+						position: nm.elts.cont.css('position'),
+						top: nm.elts.cont.css('top'),
+						left: nm.elts.cont.css('left'),
+						width: nm.elts.cont.css('width'),
+						height: nm.elts.cont.css('height'),
+						marginTop: nm.elts.cont.css('marginTop'),
+						marginLeft: nm.elts.cont.css('marginLeft')
+					})
+					.fadeIn(function() {
+						nm.elts.cont.hide();
+						clb();
+					});
+			},
+			hideTrans: function(nm, clb) {
+				nm.elts.cont.css('visibility', 'hidden').show();
+				nm.elts.load
+					.css('position', nm.elts.cont.css('position'))
+					.animate({
+						top: nm.elts.cont.css('top'),
+						left: nm.elts.cont.css('left'),
+						width: nm.elts.cont.css('width'),
+						height: nm.elts.cont.css('height'),
+						marginTop: nm.elts.cont.css('marginTop'),
+						marginLeft: nm.elts.cont.css('marginLeft')
+					}, function() {
+						nm.elts.cont.css('visibility', '');
+						nm.elts.load.fadeOut(clb);
+					});
+			},
+			resize: function(nm, clb) {
+				nm.elts.cont.animate({
+					width: nm.sizes.w,
+					height: nm.sizes.h,
+					top: (nm.getInternal().fullSize.viewH - nm.sizes.h - nm.sizes.hMargin)/2,
+					left: (nm.getInternal().fullSize.viewW - nm.sizes.w - nm.sizes.wMargin)/2
+				}, clb);
+			}
+		}
+	});
+	// Define fade aniamtions as default
+	$.nmObj({anim: {def: 'fade'}});
+});
+/*
+ * nyroModal v2.0.0
+ * 
+ * Title filter
+ * 
+ * Depends:
+ * 
+ * Before:
+ */
+jQuery(function($, undefined) {
+	$.nmFilters({
+		title: {
+			is: function(nm) {
+				return nm.opener.is('[title]');
+			},
+			beforeShowCont: function(nm) {
+				var offset = nm.elts.cont.offset();
+				nm.store.title = $('<h1 />', {
+					text: nm.opener.attr('title')
+				}).addClass('nyroModalTitle nmReposition');
+				nm.elts.cont.prepend(nm.store.title);
+			},
+			close: function(nm) {
+				if (nm.store.title) {
+					nm.store.title.remove();
+					nm.store.title = undefined;
+					delete(nm.store.title);
+				}
+			}
+		}
+	});
+});
+/*
+ * nyroModal v2.0.0
+ * 
+ * Gallery filter
+ * 
+ * Depends:
+ * - filters.title
+ * 
+ * Before: filters.title
+ */
+jQuery(function($, undefined) {
+	$.nmFilters({
+		gallery: {
+			is: function(nm) {
+				var ret = nm.opener.is('[rel]:not([rel=external], [rel=nofollow])');
+				if (ret) {
+					var rel = nm.opener.attr('rel'),
+						indexSpace = rel.indexOf(' '),
+						gal = indexSpace > 0 ? rel.substr(0, indexSpace) : rel,
+						links = $('[href][rel="'+gal+'"], [href][rel^="'+gal+' "]');
+					if (links.length < 2)
+						ret = false;
+					if (ret && nm.galleryCounts && !nm._hasFilter('title'))
+						nm.filters.push('title');
+				}
+				return ret;
+			},
+			init: function(nm) {
+				nm.useKeyHandler = true;
+			},
+			keyHandle: function(nm) {
+				// used for arrows key
+				if (!nm._animated && nm._opened) {
+					if (nm.keyEvent.keyCode == 39 || nm.keyEvent.keyCode == 40) {
+						nm.keyEvent.preventDefault();
+						nm._callFilters('galleryNext');
+					} else if (nm.keyEvent.keyCode == 37 || nm.keyEvent.keyCode == 38) {
+						nm.keyEvent.preventDefault();
+						nm._callFilters('galleryPrev');
+					}
+				}
+			},
+			initElts: function(nm) {
+				var rel = nm.opener.attr('rel'),
+					indexSpace = rel.indexOf(' ');
+				nm.store.gallery = indexSpace > 0 ? rel.substr(0, indexSpace) : rel;
+				nm.store.galleryLinks = $('[href][rel="'+nm.store.gallery+'"], [href][rel^="'+nm.store.gallery+' "]');
+				nm.store.galleryIndex = nm.store.galleryLinks.index(nm.opener);
+			},
+			beforeShowCont: function(nm) {
+				if (nm.galleryCounts && nm.store.title && nm.store.galleryLinks && nm.store.galleryLinks.length > 1) {
+					var curTitle = nm.store.title.html();
+					nm.store.title.html((curTitle.length ? curTitle+' - ' : '')+(nm.store.galleryIndex+1)+'/'+nm.store.galleryLinks.length);
+				}
+			},
+			filledContent: function(nm) {
+				var link = this._getGalleryLink(nm, -1),
+					append = nm.elts.hidden.find(' > div');
+				if (link) {
+					$('<a />', {
+							text: 'previous',
+							href: '#'
+						})
+						.addClass('nyroModalPrev')
+						.on('click', function(e) {
+							e.preventDefault();
+							nm._callFilters('galleryPrev');
+						})
+						.appendTo(append);
+				}
+				link = this._getGalleryLink(nm, 1);
+				if (link) {
+					$('<a />', {
+							text: 'next',
+							href: '#'
+						})
+						.addClass('nyroModalNext')
+						.on('click', function(e) {
+							e.preventDefault();
+							nm._callFilters('galleryNext');
+						})
+						.appendTo(append);
+				}
+			},
+			close: function(nm) {
+				nm.store.gallery = undefined;
+				nm.store.galleryLinks = undefined;
+				nm.store.galleryIndex = undefined;
+				delete(nm.store.gallery);
+				delete(nm.store.galleryLinks);
+				delete(nm.store.galleryIndex);
+				if (nm.elts.cont)
+					nm.elts.cont.find('.nyroModalNext, .nyroModalPrev').remove();
+			},
+			galleryNext: function(nm) {
+				this._getGalleryLink(nm, 1).nyroModal(nm.getForNewLinks(), true).click();
+			},
+			galleryPrev: function(nm) {
+				this._getGalleryLink(nm, -1).nyroModal(nm.getForNewLinks(), true).click();
+			},
+			_getGalleryLink: function(nm, dir) {
+				if (nm.store.gallery) {
+					if (!nm.ltr)
+						dir *= -1;
+					var index = nm.store.galleryIndex + dir;
+					if (nm.store.galleryLinks && index >= 0 && index < nm.store.galleryLinks.length)
+						return nm.store.galleryLinks.eq(index);
+					else if (nm.galleryLoop && nm.store.galleryLinks)
+						return nm.store.galleryLinks.eq(index<0 ? nm.store.galleryLinks.length-1 : 0);
+				}
+				return undefined;
+			}
+		}
+	});
+});
+/*
+ * nyroModal v2.0.0
+ * 
+ * Link filter
+ * 
+ * Depends:
+ * 
+ * Before: filters.gallery
+ */
+jQuery(function($, undefined) {
+	$.nmFilters({
+		link: {
+			is: function(nm) {
+				var ret = nm.opener.is('[href]');
+				if (ret)
+					nm.store.link = nm.getInternal()._extractUrl(nm.opener.attr('href'));
+				return ret;
+			},
+			init: function(nm) {
+				nm.loadFilter = 'link';
+				nm.opener.off('click.nyroModal').on('click.nyroModal', function(e) {
+					e.preventDefault();
+					nm.opener.trigger('nyroModal');
+				});
+			},
+			load: function(nm) {
+				$.ajax($.extend(true, {}, nm.ajax || {}, {
+					url: nm.store.link.url,
+					data: nm.store.link.sel ? [{name: nm.selIndicator, value: nm.store.link.sel.substring(1)}] : undefined,
+					success: function(data) {
+						nm._setCont(data, nm.store.link.sel);
+					},
+					error: function(jqXHR) {
+						nm._error(jqXHR);
+					}
+				}));
+			},
+			destroy: function(nm) {
+				nm.opener.off('click.nyroModal');
+			}
+		}
+	});
+});
+/*
+ * nyroModal v2.0.0
+ * 
+ * Dom filter
+ * 
+ * Depends:
+ * - filters.link
+ * 
+ * Before: filters.link
+ */
+jQuery(function($, undefined) {
+	$.nmFilters({
+		dom: {
+			is: function(nm) {
+				return nm._hasFilter('link') && !nm.store.link.url && nm.store.link.sel;
+			},
+			init: function(nm) {
+				nm.loadFilter = 'dom';
+			},
+			load: function(nm) {
+				nm.store.domEl = $(nm.store.link.sel);
+				if (nm.store.domEl.length)
+					nm._setCont(nm.domCopy ? nm.store.domEl.html() : nm.store.domEl.contents());
+				else
+					nm._error();
+			},
+			close: function(nm) {
+				if (!nm.domCopy && nm.store.domEl && nm.elts.cont)
+					nm.store.domEl.append(nm.elts.cont.find('.nyroModalDom').contents());
+			}
+		}
+	});
+});
+/*
+ * nyroModal v2.0.0
+ * 
+ * Data filter
+ * 
+ * Depends:
+ * - filters.link
+ * 
+ * Before: filters.dom
+ */
+jQuery(function($, undefined) {
+	$.nmFilters({
+		data: {
+			is: function(nm) {
+				var ret = nm.data ? true : false;
+				if (ret)
+					nm._delFilter('dom');
+				return ret;
+			},
+			init: function(nm) {
+				nm.loadFilter = 'data';
+			},
+			load: function(nm) {
+				nm._setCont(nm.data);
+			}
+		}
+	});
+});
+/*
+ * nyroModal v2.0.0
+ * 
+ * Image filter
+ * 
+ * Depends:
+ * - filters.link
+ * 
+ * Before: filters.data
+ */
+jQuery(function($, undefined) {
+	$.nmFilters({
+		image: {
+			is: function(nm) {
+				return (new RegExp(nm.imageRegex, 'i')).test(nm.opener.attr('href'));
+			},
+			init: function(nm) {
+				nm.loadFilter = 'image';
+			},
+			load: function(nm) {
+				var url = nm.opener.attr('href');
+				$('<img />')
+					.load(function() {
+						nm.elts.cont.addClass('nyroModalImg');
+						nm.elts.hidden.addClass('nyroModalImg');
+						nm._setCont(this);
+					}).error(function() {
+						nm._error();
+					})
+					.attr('src', url);
+			},
+			size: function(nm) {
+				if (nm.sizes.w != nm.sizes.initW || nm.sizes.h != nm.sizes.initH) {
+					var ratio = Math.min(nm.sizes.w/nm.sizes.initW, nm.sizes.h/nm.sizes.initH);
+					nm.sizes.w = nm.sizes.initW * ratio;
+					nm.sizes.h = nm.sizes.initH * ratio;
+				}
+				var img = nm.loading ? nm.elts.hidden.find('img') : nm.elts.cont.find('img');
+				img.attr({
+					width: nm.sizes.w,
+					height: nm.sizes.h
+				});
+			},
+			close: function(nm) {
+				if (nm.elts.cont) {
+					nm.elts.cont.removeClass('nyroModalImg');
+					nm.elts.hidden.removeClass('nyroModalImg');
+				}
+			}
+		}
+	});
+});
+/*
+ * nyroModal v2.0.0
+ * 
+ * SWF filter
+ * 
+ * Depends:
+ * - filters.link
+ * 
+ * Before: filters.image
+ */
+jQuery(function($, undefined) {
+	$.nmFilters({
+		swf: {
+			idCounter: 1,
+			is: function(nm) {
+				return nm._hasFilter('link') && nm.opener.is('[href$=".swf"]');
+			},
+			init: function(nm) {
+				nm.loadFilter = 'swf';
+			},
+			load: function(nm) {
+				if (!nm.swfObjectId)
+					nm.swfObjectId = 'nyroModalSwf-'+(this.idCounter++);
+				var url = nm.store.link.url,
+					cont = '<div><object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" id="'+nm.swfObjectId+'" width="'+nm.sizes.w+'" height="'+nm.sizes.h+'"><param name="movie" value="'+url+'"></param>',
+					tmp = '';
+				$.each(nm.swf, function(name, val) {
+					cont+= '<param name="'+name+'" value="'+val+'"></param>';
+					tmp+= ' '+name+'="'+val+'"';
+				});
+				cont+= '<embed src="'+url+'" type="application/x-shockwave-flash" width="'+nm.sizes.w+'" height="'+nm.sizes.h+'"'+tmp+'></embed></object></div>';
+				nm._setCont(cont);
+			}
+		}
+	});
+});
+/*
+ * nyroModal v2.0.0
+ * 
+ * Form filter
+ * 
+ * Depends:
+ * 
+ * Before: filters.swf
+ */
+jQuery(function($, undefined) {
+	$.nmFilters({
+		form: {
+			is: function(nm) {
+				var ret = nm.opener.is('form');
+				if (ret)
+					nm.store.form = nm.getInternal()._extractUrl(nm.opener.attr('action'));
+				return ret;
+			},
+			init: function(nm) {
+				nm.loadFilter = 'form';
+				nm.opener.off('submit.nyroModal').on('submit.nyroModal', function(e) {
+					e.preventDefault();
+					nm.opener.trigger('nyroModal');
+				});
+			},
+			load: function(nm) {
+				var data = {};
+				$.map(nm.opener.serializeArray(), function(d) {
+					data[d.name] = d.value;
+				});
+				if (nm.store.form.sel)
+					data[nm.selIndicator] = nm.store.form.sel.substring(1);
+				$.ajax($.extend(true, { type : 'get', dataType : 'text' }, nm.ajax || {}, {
+					url: nm.store.form.url,
+					data: data,
+					type: nm.opener.attr('method') ? nm.opener.attr('method') : undefined,
+					success: function(data) {
+						nm._setCont(data, nm.store.form.sel);
+					},
+					error: function(jqXHR) {
+						nm._error(jqXHR);
+					}
+				}));
+			},
+			destroy: function(nm) {
+				nm.opener.off('submit.nyroModal');
+			}
+		}
+	});
+});
+/*
+ * nyroModal v2.0.0
+ * 
+ * Form file filter
+ * 
+ * Depends:
+ * 
+ * Before: filters.form
+ */
+jQuery(function($, undefined) {
+	$.nmFilters({
+		formFile: {
+			is: function(nm) {
+				var ret = nm.opener.is('form[enctype="multipart/form-data"]');
+				if (ret) {
+					nm._delFilter('form');
+					if (!nm.store.form)
+						nm.store.form = nm.getInternal()._extractUrl(nm.opener.attr('action'));
+				}
+				return ret;
+			},
+			init: function(nm) {
+				nm.loadFilter = 'formFile';
+				nm.store.formFileLoading = false;
+				nm.opener.off('submit.nyroModal').on('submit.nyroModal', function(e) {
+					if (!nm.store.formFileIframe) {
+						e.preventDefault();
+						nm.opener.trigger('nyroModal');
+					} else {
+						nm.store.formFileLoading = true;
+					}
+				});
+			},
+			initElts: function(nm) {
+				var inputSel;
+				if (nm.store.form.sel)
+					inputSel = $('<input type="hidden" />', {
+						name: nm.selIndicator,
+						value: nm.store.form.sel.substring(1)
+					}).appendTo(nm.opener);
+				function rmFormFileElts() {
+					if (inputSel) {
+						inputSel.remove();
+						inputSel = undefined;
+						delete(inputSel);
+					}
+					nm.store.formFileIframe.attr('src', 'about:blank').remove();
+					nm.store.formFileIframe = undefined;
+					delete(nm.store.formFileIframe);
+				}
+				nm.store.formFileIframe = $('<iframe />')
+					.attr({
+						name: 'nyroModalFormFile',
+						src: 'javascript:\'\';',
+						id: 'nyromodal-iframe-'+(new Date().getTime()),
+						frameborder: '0'
+					})
+					.hide()
+					.load(function() {
+						if (nm.store.formFileLoading) {
+							nm.store.formFileLoading = false;
+							var content = nm.store.formFileIframe
+									.off('load error')
+									.contents().find('body').not('script[src]');
+							if (content && content.html() && content.html().length) {
+								rmFormFileElts();
+								nm._setCont(content.html(), nm.store.form.sel);
+							} else {
+								// Not totally ready, try it in a few secs
+								var nbTry = 0,
+									fct = function() {
+										nbTry++;
+										var content = nm.store.formFileIframe
+												.off('load error')
+												.contents().find('body').not('script[src]');
+										if (content && content.html() && content.html().length) {
+											nm._setCont(content.html(), nm.store.form.sel);
+											rmFormFileElts();
+										} else if (nbTry < 5) {
+											setTimeout(fct, 25);
+										} else {
+											rmFormFileElts();
+											nm._error();
+										}
+									};
+								setTimeout(fct, 25);
+							}
+						}
+					})
+					.on('error', function() {
+						rmFormFileElts();
+						nm._error();
+					});
+				nm.elts.all.append(nm.store.formFileIframe);
+				nm.opener
+					.attr('target', 'nyroModalFormFile')
+					.submit();
+			},
+			close: function(nm) {
+				nm.store.formFileLoading = false;
+				if (nm.store.formFileIframe) {
+					nm.store.formFileIframe.remove();
+					nm.store.formFileIframe = undefined;
+					delete(nm.store.formFileIframe);
+				}
+			},
+			destroy: function(nm) {
+				nm.opener.off('submit.nyroModal')
+			}
+		}
+	});
+});
+/*
+ * nyroModal v2.0.0
+ * 
+ * Iframe filter
+ * 
+ * Depends:
+ * - filters.link
+ * 
+ * Before: filters.formFile
+ */
+jQuery(function($, undefined) {
+	$.nmFilters({
+		iframe: {
+			is: function(nm) {
+				var	target = nm.opener.attr('target') || '',
+					rel = nm.opener.attr('rel') || '',
+					opener = nm.opener.get(0);
+				return !nm._hasFilter('image') && (target.toLowerCase() == '_blank'
+					|| rel.toLowerCase().indexOf('external') > -1
+					|| (opener.hostname && opener.hostname.replace(/:\d*$/,'') != window.location.hostname.replace(/:\d*$/,'')));
+			},
+			init: function(nm) {
+				nm.loadFilter = 'iframe';
+			},
+			load: function(nm) {
+				nm.store.iframe = $('<iframe />')
+					.attr({
+						src: 'javascript:\'\';',
+						id: 'nyromodal-iframe-'+(new Date().getTime()),
+						frameborder: '0'
+					});
+				nm._setCont(nm.store.iframe);
+			},
+			afterShowCont: function(nm) {
+				nm.store.iframe.attr('src', nm.opener.attr('href'));
+			},
+			close: function(nm) {
+				if (nm.store.iframe) {
+					nm.store.iframe.remove();
+					nm.store.iframe = undefined;
+					delete(nm.store.iframe);
+				}
+			}
+		}
+	});
+});
+/*
+ * nyroModal v2.0.0
+ * 
+ * Iframe form filter
+ * 
+ * Depends:
+ * - filters.iframe
+ * 
+ * Before: filters.iframe
+ */
+jQuery(function($, undefined) {
+	$.nmFilters({
+		iframeForm: {
+			is: function(nm) {
+				var ret = nm._hasFilter('iframe') && nm.opener.is('form');
+				if (ret) {
+					nm._delFilter('iframe');
+					nm._delFilter('form');
+				}
+				return ret;
+			},
+			init: function(nm) {
+				nm.loadFilter = 'iframeForm';
+				nm.store.iframeFormLoading = false;
+				nm.store.iframeFormOrgTarget = nm.opener.attr('target');
+				nm.opener.off('submit.nyroModal').on('submit.nyroModal', function(e) {
+					if (!nm.store.iframeFormIframe) {
+						e.preventDefault();
+						nm.opener.trigger('nyroModal');
+					} else {
+						nm.store.iframeFormLoading = true;
+					}
+				});
+			},
+			load: function(nm) {
+				nm.store.iframeFormIframe = $('<iframe />')
+					.attr({
+						name: 'nyroModalIframeForm',
+						src: 'javascript:\'\';',
+						id: 'nyromodal-iframe-'+(new Date().getTime()),
+						frameborder: '0'
+					});
+				nm._setCont(nm.store.iframeFormIframe);
+			},
+			afterShowCont: function(nm) {
+				nm.opener
+					.attr('target', 'nyroModalIframeForm')
+					.submit();
+			},
+			close: function(nm) {
+				nm.store.iframeFormOrgTarget ? nm.opener.attr('target', nm.store.iframeFormOrgTarget) : nm.opener.removeAttr('target');
+				delete(nm.store.formFileLoading);
+				delete(nm.store.iframeFormOrgTarget);
+				if (nm.store.iframeFormIframe) {
+					nm.store.iframeFormIframe.remove();
+					nm.store.iframeFormIframe = undefined;
+					delete(nm.store.iframeFormIframe);
+				}
+			},
+			destroy: function(nm) {
+				nm.opener.off('submit.nyroModal')
+			}
+		}
+	});
+});
+/*
+ * nyroModal v2.0.0
+ * 
+ * Embedly filter
+ * 
+ * Depends:
+ * - filters.link
+ * 
+ * Before: filters.iframeForm
+ */
+jQuery(function($, undefined) {
+	$.nmObj({
+		embedlyUrl: 'http://api.embed.ly/1/oembed',
+		embedly: {
+			key: undefined,
+			wmode: 'transparent',
+			allowscripts: true,
+			format: 'json'
+			
+			/*
+			maxwidth: 400,
+			maxheight: 400,
+			width: 400,
+			nostyle: false,
+			autoplay: false,
+			videosrc: false,
+			words: 50,
+			chars: 100
+			*/
+		}
+	});
+	var cache = [];
+	$.nmFilters({
+		embedly: {
+			is: function(nm) {
+				if (nm._hasFilter('link') && nm._hasFilter('iframe') && nm.opener.attr('href') && nm.embedly.key) {
+					if (cache[nm.opener.attr('href')]) {
+						nm.store.embedly = cache[nm.opener.attr('href')];
+						nm._delFilter('iframe');
+						return true;
+					}
+					nm.store.embedly = false;
+					var data = nm.embedly;
+					data.url = nm.opener.attr('href');
+					$.ajax({
+						url: nm.embedlyUrl,
+						dataType: 'jsonp',
+						data: data,
+						success: function(data) {
+							if (data.type != 'error' && data.html) {
+								nm.store.embedly = data;
+								cache[nm.opener.attr('href')] = data;
+								nm._delFilter('iframe');
+								nm.filters.push('embedly');
+								nm._callFilters('initFilters');
+								nm._callFilters('init');
+							}
+						}
+					});
+				}
+				return false;
+			},
+			init: function(nm) {
+				nm.loadFilter = 'embedly';
+			},
+			load: function(nm) {
+				if (nm.store.embedly.type == 'photo') {
+					nm.filters.push('image');
+					$('<img />')
+						.load(function() {
+							nm.elts.cont.addClass('nyroModalImg');
+							nm.elts.hidden.addClass('nyroModalImg');
+							nm._setCont(this);
+						}).on('error', function() {
+							nm._error();
+						})
+						.attr('src', nm.store.embedly.url);
+				} else {
+					nm._setCont('<div>'+nm.store.embedly.html+'</div>');
+				}
+			},
+			size: function(nm) {
+				if (nm.store.embedly.width && !nm.sizes.height) {
+					nm.sizes.w = nm.store.embedly.width;
+					nm.sizes.h = nm.store.embedly.height;
+				}
+			}
+		}
+	});
+});
+
+/*
+ * nyroModal v2.0.0
+ * 
+ * Youtube filter
+ * 
+ * Depends:
+ * - filters.link
+ * 
+ * Before: filters.embedly
+ */
+ /*
+jQuery(function($, undefined) {
+	$.nmFilters({
+		youtube: {
+			is: function(nm) {
+				if (nm._hasFilter('link') && nm._hasFilter('iframe') && nm.opener.attr('href').indexOf('www.youtube.com/watch?v=') > -1) {
+					nm._delFilter('iframe');
+					return true;
+				}
+				return false;
+			},
+			init: function(nm) {
+				nm.loadFilter = 'youtube';
+			},
+			load: function(nm) {
+				nm.store.youtubeIframe = $('<iframe />')
+					.attr({
+						src: 'javascript:\'\';',
+						id: 'nyromodal-iframe-'+(new Date().getTime()),
+						frameborder: '0'
+					});
+				nm._setCont(nm.store.youtubeIframe);
+			},
+			afterShowCont: function(nm) {
+				nm.store.youtubeIframe.attr('src', nm.opener.attr('href').replace(/watch\?v=/i, 'embed/'));
+			},
+			close: function(nm) {
+				if (nm.store.youtubeIframe) {
+					nm.store.youtubeIframe.remove();
+					nm.store.youtubeIframe = undefined;
+					delete(nm.store.youtubeIframe);
+				}
+			}
+		}
+	});
+});
+*/
