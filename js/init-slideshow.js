@@ -93,3 +93,19 @@ jQuery( function() {
 		}
 	}
 } );
+
+jQuery(function($) {
+	$.nmObj({embedly: {key: 'f70bcbf786c742b4b563be5bfa859b17'}});
+	$('.nyroModal').nyroModal({
+		callbacks : {
+			beforeShowCont : function() {
+				jQuery( '.flexslider' ).flexslider( 'pause' );
+				jQuery( '.nyroModalBg' ).css( { 'width' : '100%', 'height' : window.innerHeight + 'px', 'position' : 'fixed' } );
+			}, 
+			afterClose : function() {
+				jQuery( '.flexslider' ).flexslider( 'play' );
+			}
+		}
+	});
+	$( '.nyroModalBg' ).css( 'height', document.height + 'px' );
+});

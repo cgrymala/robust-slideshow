@@ -30,18 +30,8 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 		function __construct() {
 			add_action( 'init', array( $this, 'register_types' ) );
 			add_action( 'init', array( $this, 'register_tax' ) );
-			if ( is_admin() ) {
-				wp_register_script( 'jquery-bbq', plugins_url( '/js/jquery-bbq/jquery.ba-bbq.min.js', dirname( __FILE__ ) ), array( 'jquery' ), '1.3-pre', true );
-				wp_register_script( 'robust-slideshow-metabox-script', plugins_url( '/js/metabox-scripts.js', dirname( __FILE__ ) ), array( 'jquery-bbq' ), '0.1.32', true );
-				wp_register_script( 'edit-robust-slideshow', plugins_url( '/js/slideshow-edit.js', dirname( __FILE__ ) ), array( 'jquery' ), '0.1.3', true );
-				wp_register_style( 'robust-slideshow-admin-styles', plugins_url( '/css/admin-styles.css', dirname( __FILE__ ) ), '0.1.6', array(), 'all' );
-				add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_style' ) );
-			} else {
-				wp_register_style( 'flex-slider', plugins_url( '/js/flex-slider/flexslider.css', dirname( __FILE__ ) ), array(), '2.1', 'all' );
-				wp_register_style( 'robust-slideshow', plugins_url( '/css/robust-slider.css', dirname( __FILE__ ) ), array( 'flex-slider' ), '1.1', 'all' );
-				wp_register_script( 'flex-slider', plugins_url( '/js/flex-slider/jquery.flexslider-min.js', dirname( __FILE__ ) ), array( 'jquery' ), '2.1', true );
-				wp_register_script( 'robust-slideshow', plugins_url( '/js/init-slideshow.js', dirname( __FILE__ ) ), array( 'flex-slider' ), '1.1', true );
-			}
+			add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 			
 			add_shortcode( 'slideshow', array( $this, 'do_shortcode' ) );
 			
@@ -53,6 +43,26 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 			foreach ( $sizes as $k => $size ) {
 				$sizename = sprintf( 'robust-slideshow-%s-%sx%s%s', $k, $size['width'], $size['height'], ( $size['crop'] ? '-cropped' : '' ) ); 
 				add_image_size( $sizename, $size['width'], $size['height'], $size['crop'] );
+			}
+		}
+		
+		/**
+		 * Enqueue any scripts or styles we need for this plugin
+		 */
+		function enqueue_scripts() {
+			if ( is_admin() ) {
+				wp_register_script( 'jquery-bbq', plugins_url( '/js/jquery-bbq/jquery.ba-bbq.min.js', dirname( __FILE__ ) ), array( 'jquery' ), '1.3-pre', true );
+				wp_register_script( 'robust-slideshow-metabox-script', plugins_url( '/js/metabox-scripts.js', dirname( __FILE__ ) ), array( 'jquery-bbq' ), '0.1.32', true );
+				wp_register_script( 'edit-robust-slideshow', plugins_url( '/js/slideshow-edit.js', dirname( __FILE__ ) ), array( 'jquery' ), '0.1.3', true );
+				wp_register_style( 'robust-slideshow-admin-styles', plugins_url( '/css/admin-styles.css', dirname( __FILE__ ) ), '0.1.6', array(), 'all' );
+				add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_style' ) );
+			} else {
+				wp_register_style( 'flex-slider', plugins_url( '/js/flex-slider/flexslider.css', dirname( __FILE__ ) ), array(), '2.1', 'all' );
+				wp_register_style( 'robust-slideshow', plugins_url( '/css/robust-slider.css', dirname( __FILE__ ) ), array( 'flex-slider' ), '1.1', 'all' );
+				wp_register_style( 'nyromodal', plugins_url( '/js/nyromodal/styles/nyroModal.css', dirname( __FILE__ ) ), array(), '2014-10-17', 'all' );
+				wp_register_script( 'flex-slider', plugins_url( '/js/flex-slider/jquery.flexslider-min.js', dirname( __FILE__ ) ), array( 'jquery' ), '2.1', true );
+				wp_register_script( 'nyromodal', plugins_url( '/js/nyromodal/js/jquery.nyroModal.js', dirname( __FILE__ ) ), array( 'jquery' ), '2014-10-17', true );
+				wp_register_script( 'robust-slideshow', plugins_url( '/js/init-slideshow.js', dirname( __FILE__ ) ), array( 'flex-slider', 'nyromodal' ), '1.1.15', true );
 			}
 		}
 		
@@ -134,7 +144,6 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 			$meta_vals['show_title'] = in_array( $meta_vals['show_title'], array( '1', 1, true, 'true' ) );
 			$meta_vals['show_caption'] = in_array( $meta_vals['show_caption'], array( '1', 1, true, 'true' ) );
 ?>
-<!-- <?php var_dump( $meta_vals ) ?> -->
 <p><label for="slide-link"><?php _e( 'How should the slide link to the full post?' ) ?></label>
 	<select class="widefat" name="robust[link]" id="slide-link">
     	<option value=""<?php selected( $meta_vals['link'], null ) ?>><?php _e( 'Do not link this slide' ) ?></option>
@@ -155,6 +164,8 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
         <option value="text"<?php selected( $meta_vals['type'], 'text' ) ?>><?php _e( 'Just display the content of this post' ) ?></option>
         <option value="other-image"<?php selected( $meta_vals['type'], 'other-image' ) ?>><?php _e( 'Use an image from the media library' ) ?></option>
     </select></p>
+<p><input type="checkbox" name="robust[lightbox]" id="slide-link-lightbox" value="1"<?php checked( $meta_vals['lightbox'] ) ?> />
+	<label for="slide-link-lightbox"><?php _e( 'Open link in lightbox/modal window?' ) ?></label></p>
 <div class="video-information">
     <h4><?php _e( 'Video Information' ) ?></h4>
     <p><?php _e( 'If the video option is selected above, please specify the URL to the video that should be embedded' ) ?><br />
@@ -288,6 +299,9 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 				$vals['show_title'] = true;
 			if ( isset( $input['showcaption'] ) && '1' == $input['showcaption'] )
 				$vals['show_caption'] = true;
+			
+			if ( isset( $input['lightbox'] ) && '1' == $input['lightbox'] )
+				$vals['lightbox'] = true;
 			
 			if ( isset( $input['type'] ) )
 				$vals['type'] = $input['type'];
@@ -657,7 +671,7 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 				$meta['show_caption'] = in_array( $meta['show_caption'], array( '1', 1, true, 'true' ) );
 				$rt .= '<li class="robust-slide"><figure id="slide-' . esc_attr( $post->post_name ) . '">';
 				if ( 'whole' == $meta['link'] ) {
-					$rt .= '<a href="' . get_permalink() . '">';
+					$rt .= sprintf( '<a href="%1$s"%2$s>', get_permalink(), ( $meta['lightbox'] ? ' class="nyroModal"' : '' ) );
 				}
 				switch( $meta['type'] ) {
 					case 'video' :
@@ -689,12 +703,12 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 				if ( ( $meta['show_title'] && ! empty( $post->post_title ) ) || ( $meta['show_caption'] && ! empty( $post->post_content ) ) ) {
 					$rt .= '<figcaption class="flex-caption">';
 					if ( 'content' == $meta['link'] ) {
-						$rt .= '<a href="' . get_permalink() . '">';
+						$rt .= sprintf( '<a href="%1$s"%2$s>', get_permalink(), ( $meta['lightbox'] ? ' class="nyroModal"' : '' ) );
 					}
 					if ( $meta['show_title'] && ! empty( $post->post_title ) ) {
 						$rt .= '<h1>';
 						if ( 'title' == $meta['link'] ) {
-							$rt .= '<a href="' . get_permalink() . '">';
+							$rt .= sprintf( '<a href="%1$s"%2$s>', get_permalink(), ( $meta['lightbox'] ? ' class="nyroModal"' : '' ) );
 						}
 						$rt .= get_the_title();
 						if ( 'title' == $meta['link'] ) {
@@ -705,7 +719,7 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 					if ( $meta['show_caption'] && ! empty( $post->post_content ) ) {
 						$rt .= '<div>';
 						if ( 'caption' == $meta['link'] ) {
-							$rt .= '<a href="' . get_permalink() . '">';
+							$rt .= sprintf( '<a href="%1$s"%2$s>', get_permalink(), ( $meta['lightbox'] ? ' class="nyroModal"' : '' ) );
 						}
 						$rt .= get_the_content( 'Read more' );
 						if ( 'caption' == $meta['link'] ) {
