@@ -25,16 +25,9 @@ function onPlayerStateChange( event ) {
 		return;
 	}
 	if ( event.data == YT.PlayerState.PLAYING ) {
-		if ( jQuery( '.flex-play' ).length >= 1 ) {
-			jQuery( '.flex-play' ).trigger( 'click' );
-			jQuery( '.flex-pause' ).trigger( 'click' );
-		}
-		if ( jQuery( '.flex-pause' ).length >= 1 ) {
-			jQuery( '.flex-pause' ).trigger( 'click' );
-		}
+		jQuery( '.flexslider' ).flexslider( 'pause' );
 	} else if ( event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED ) {
-		jQuery( '.flex-pause' ).trigger( 'click' );
-		jQuery( '.flex-play' ).trigger( 'click' );
+		jQuery( '.flexslider' ).flexslider( 'play' );
 	}
 }
 
