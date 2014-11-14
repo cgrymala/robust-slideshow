@@ -94,7 +94,37 @@ jQuery( function() {
 	}
 } );
 
-jQuery(function($) {
+jQuery( function( $ ) {
+	$.embedly.defaults = {
+		key:'f70bcbf786c742b4b563be5bfa859b17',
+		query: {
+			maxwidth:640,
+			autoplay:true
+		},
+		display: $.noop
+	}
+	
+	$('a.nyroModal').on('click', function(){
+		var url = $(this).attr('href');
+		
+		// Start the modal and on hide, clear the html out. This removes the embed.
+		// It's important to do so as if a user starts playing a video, then closes
+		// the modal the video will still be playing and the user will hear the sound.
+		$('#video-modal').modal().on('hide', function(){
+			$('#video-modal .modal-body').html('');
+		})
+		
+		// Call embedly and when the url has been resolved fill the modal.
+		$.embedly.oembed(url).progress(function(data){
+			$('#video-modal .modal-header h3').html(data.title);
+			$('#video-modal .modal-body').html(data.html);
+		});
+		
+		return false;
+	});
+} );
+
+/*jQuery(function($) {
 	$.nmObj({embedly: {key: 'f70bcbf786c742b4b563be5bfa859b17'}});
 	$('.nyroModal').nyroModal({
 		callbacks : {
@@ -108,4 +138,4 @@ jQuery(function($) {
 		}
 	});
 	$( '.nyroModalBg' ).css( 'height', document.height + 'px' );
-});
+});*/
