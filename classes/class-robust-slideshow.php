@@ -1,7 +1,7 @@
 <?php
 /**
  * Define the main class for the Robust Slideshow plugin
- * @version 1.2
+ * @version 1.4
  */
 if ( ! class_exists( 'robust_slideshow' ) ) {
 	class robust_slideshow {
