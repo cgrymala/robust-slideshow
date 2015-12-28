@@ -137,11 +137,21 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 			wp_enqueue_script( 'robust-slideshow-metabox-script' );
 			
 			wp_nonce_field( 'slide-content-meta', '_slide_content_nonce' );
-			$meta_vals = get_post_meta( $_REQUEST['post'], 'slide-content-meta', true );
+			if ( isset( $_REQUEST ) && array_key_exists( 'post', $_REQUEST ) ) {
+				$meta_vals = get_post_meta( $_REQUEST['post'], 'slide-content-meta', true );
+			} else {
+				$meta_vals = array();
+			}
 			if ( empty( $meta_vals ) )
 				$meta_vals = array();
 			$meta_vals = array_merge( apply_filters( 'robust-slideshow-default-meta', array(
 				'type' => null, 
+				'show_title' => false, 
+				'show_caption' => false, 
+				'link' => null, 
+				'lightbox' => false, 
+				'video-url' => null, 
+				'image-id' => null
 			) ), $meta_vals );
 			$meta_vals['show_title'] = in_array( $meta_vals['show_title'], array( '1', 1, true, 'true' ) );
 			$meta_vals['show_caption'] = in_array( $meta_vals['show_caption'], array( '1', 1, true, 'true' ) );
@@ -279,7 +289,7 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 		function save_post( $post_id ) {
 			if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE )
 				return;
-			if ( 'robust-slide' !== $_POST['post_type'] )
+			if ( ! isset( $_POST['post_type'] ) || 'robust-slide' !== $_POST['post_type'] )
 				return/* wp_die( 'The post type was wrong' )*/;
 			if ( ! current_user_can( 'edit_post', $post_id ) )
 				return/* wp_die( 'Wrong permissions' )*/;
@@ -503,6 +513,11 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 		function slideshow_add_fields( $term ) {
 			wp_enqueue_script( 'edit-robust-slideshow' );
 			$sizes = get_intermediate_image_sizes();
+			if ( is_object( $term ) && property_exists( $term, 'size' ) ) {
+				$termsize = $term->size;
+			} else {
+				$termsize = null;
+			}
 ?>
 <h3><?php _e( 'Slideshow Dimensions' ) ?></h3>
 <p><em><?php _e( 'If you create a new image size, you may need to regenerate your image thumbnails before the new size will work properly within the slideshow. If you do not have the <a href="http://wordpress.org/extend/plugins/regenerate-thumbnails/">Regenerate Thumbnails</a> plugin installed, you should install and activate it.' ) ?></em></p>
@@ -510,11 +525,11 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 <div class="form-field">
 	<label for="tag-image-size"><?php _e( 'Image size:' ) ?></label>
     <select name="image-size" id="tag-image-size">
-    	<option value=""<?php selected( $term->size, null ) ?>><?php _e( 'Custom dimensions (specified below)' ) ?></option>
+    	<option value=""<?php selected( $termsize, null ) ?>><?php _e( 'Custom dimensions (specified below)' ) ?></option>
 <?php
 			foreach ( $sizes as $size ) {
 ?>
-        <option value="<?php echo esc_attr( $size ) ?>"<?php selected( $term->size, $size ) ?>><?php echo $size ?></option>
+        <option value="<?php echo esc_attr( $size ) ?>"<?php selected( $termsize, $size ) ?>><?php echo $size ?></option>
 <?php
 			}
 ?>
@@ -652,7 +667,7 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 			if ( empty( $term ) )
 				return;
 			
-			$slide_query = new WP_Query( array( 'robust-slideshow' => $term->slug, 'post_type' => 'robust-slide', 'posts_per_page' => -1, 'orderby' => 'menu_order' ) );
+			$slide_query = new WP_Query( array( 'robust-slideshow' => $term->slug, 'post_type' => 'robust-slide', 'posts_per_page' => -1, 'orderby' => 'menu_order', 'order' => 'asc' ) );
 			if ( ! $slide_query->have_posts() )
 				return;
 			
@@ -746,7 +761,7 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 			wp_reset_postdata();
 			$more = $oldmore;
 			
-			$term->script_origin = get_bloginfo( 'siteurl' );
+			$term->script_origin = get_bloginfo( 'url' );
 			
 			wp_enqueue_style( 'robust-slideshow' );
 			wp_localize_script( 'robust-slideshow', 'slideshowOpts', (array) $term );
