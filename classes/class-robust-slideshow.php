@@ -608,7 +608,7 @@ if ( ! class_exists( 'robust_slideshow' ) ) {
 		 * Save any changes made to slideshow data
 		 */
 		function save_slideshow_term( $term_id ) {
-			if ( ! wp_verify_nonce( $_POST['_rs_dim_nonce'], 'slideshow-dim-fields' ) )
+			if ( ! isset( $_POST['_rs_dim_nonce'] ) || ! wp_verify_nonce( $_POST['_rs_dim_nonce'], 'slideshow-dim-fields' ) )
 				return $term_id;
 			
 			$opts = array();
